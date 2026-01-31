@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 
 const API = axios.create({
-  baseURL: 'process.env.REACT_APP_API_URL',
+  baseURL: 'https://brandscapers-blog.onrender.com/api',
 });
 
 /**
