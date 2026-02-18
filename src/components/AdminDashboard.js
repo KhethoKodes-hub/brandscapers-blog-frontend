@@ -15,6 +15,10 @@ export default function AdminDashboard() {
   const [previewPost, setPreviewPost] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [fontColor, setFontColor] = useState('#000000');
+  const [lineSpacing, setLineSpacing] = useState('normal');
+  const [fontFamily, setFontFamily] = useState('Arial');
+  const [fontStyle, setFontStyle] = useState('normal');
   const contentRef = useRef(null);
   const navigate = useNavigate();
 
@@ -161,6 +165,75 @@ export default function AdminDashboard() {
     setActiveTab('preview');
   };
 
+  // New font and styling functions
+  const handleFontColorChange = (e) => {
+    const color = e.target.value;
+    setFontColor(color);
+    formatText('foreColor', color);
+  };
+
+  const handleLineSpacingChange = (e) => {
+    const spacing = e.target.value;
+    setLineSpacing(spacing);
+    
+    let lineHeightValue = 'normal';
+    switch(spacing) {
+      case 'single':
+        lineHeightValue = '1';
+        break;
+      case '1.5':
+        lineHeightValue = '1.5';
+        break;
+      case 'double':
+        lineHeightValue = '2';
+        break;
+      default:
+        lineHeightValue = 'normal';
+    }
+    
+    if (contentRef.current) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.style.lineHeight = lineHeightValue;
+        range.surroundContents(span);
+        updateContent();
+      }
+    }
+  };
+
+  const handleFontFamilyChange = (e) => {
+    const font = e.target.value;
+    setFontFamily(font);
+    formatText('fontName', font);
+  };
+
+  const handleFontStyleChange = (e) => {
+    const style = e.target.value;
+    setFontStyle(style);
+    
+    switch(style) {
+      case 'normal':
+        formatText('removeFormat');
+        break;
+      case 'bold':
+        formatText('bold');
+        break;
+      case 'italic':
+        formatText('italic');
+        break;
+      case 'underline':
+        formatText('underline');
+        break;
+      case 'strikethrough':
+        formatText('strikeThrough');
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="admin-container">
       <div className="container py-5">
@@ -229,7 +302,7 @@ export default function AdminDashboard() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">
-                      <span className="label-icon">📝</span>
+                      <span className="label-icon"></span>
                       Title
                     </label>
                     <input 
@@ -241,7 +314,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">
-                      <span className="label-icon">🔗</span>
+                      <span className="label-icon"></span>
                       Slug
                     </label>
                     <input 
@@ -264,7 +337,7 @@ export default function AdminDashboard() {
                       className={`preview-toggle ${isPreviewMode ? 'active' : ''}`}
                       onClick={togglePreview}
                     >
-                      {isPreviewMode ? '✏️ Edit Mode' : '👁️ Preview Mode'}
+                      {isPreviewMode ? '✏️ Edit Mode' : ' Preview Mode'}
                     </button>
                   </div>
 
@@ -368,6 +441,79 @@ export default function AdminDashboard() {
 
                       <div className="toolbar-divider"></div>
 
+                      {/* New Font Controls */}
+                      <div className="toolbar-group">
+                        <input
+                          type="color"
+                          value={fontColor}
+                          onChange={handleFontColorChange}
+                          className="color-picker"
+                          title="Font Color"
+                        />
+                      </div>
+
+                      <div className="toolbar-divider"></div>
+
+                      <div className="toolbar-group">
+                        <select
+                          className="toolbar-select"
+                          value={fontFamily}
+                          onChange={handleFontFamilyChange}
+                          title="Font Family"
+                        >
+                          <option value="Arial">Arial</option>
+                          <option value="Helvetica">Helvetica</option>
+                          <option value="Times New Roman">Times New Roman</option>
+                          <option value="Georgia">Georgia</option>
+                          <option value="Courier New">Courier New</option>
+                          <option value="Verdana">Verdana</option>
+                          <option value="Tahoma">Tahoma</option>
+                          <option value="Trebuchet MS">Trebuchet MS</option>
+                          <option value="Impact">Impact</option>
+                          <option value="Comic Sans MS">Comic Sans MS</option>
+                          <option value="Arial Black">Arial Black</option>
+                          <option value="Palatino">Palatino</option>
+                          <option value="Garamond">Garamond</option>
+                          <option value="Bookman">Bookman</option>
+                          <option value="Avant Garde">Avant Garde</option>
+                        </select>
+                      </div>
+
+                      <div className="toolbar-divider"></div>
+
+                      <div className="toolbar-group">
+                        <select
+                          className="toolbar-select"
+                          value={fontStyle}
+                          onChange={handleFontStyleChange}
+                          title="Font Style"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="bold">Bold</option>
+                          <option value="italic">Italic</option>
+                          <option value="underline">Underline</option>
+                          <option value="strikethrough">Strikethrough</option>
+                        </select>
+                      </div>
+
+                      <div className="toolbar-divider"></div>
+
+                      <div className="toolbar-group">
+                        <select
+                          className="toolbar-select"
+                          value={lineSpacing}
+                          onChange={handleLineSpacingChange}
+                          title="Line Spacing"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="single">Single</option>
+                          <option value="1.5">1.5</option>
+                          <option value="double">Double</option>
+                        </select>
+                      </div>
+
+                      <div className="toolbar-divider"></div>
+
                       <div className="toolbar-group">
                         <button type="button" className="toolbar-btn danger" onClick={() => formatText('removeFormat')} title="Clear Formatting">
                           🧹 Clear
@@ -435,7 +581,7 @@ export default function AdminDashboard() {
                 </div>
                 
                 <button className="submit-button" type="submit">
-                  <span className="button-icon">🚀</span>
+                  <span className="button-icon"></span>
                   Create Post
                 </button>
               </form>
@@ -955,6 +1101,33 @@ export default function AdminDashboard() {
         .toolbar-select:hover {
           border-color: #42a5f5;
           box-shadow: 0 4px 12px rgba(66, 165, 245, 0.2);
+        }
+
+        /* Color Picker */
+        .color-picker {
+          width: 40px;
+          height: 40px;
+          padding: 0;
+          border: 2px solid rgba(66, 165, 245, 0.2);
+          border-radius: 10px;
+          cursor: pointer;
+          background: white;
+          transition: all 0.2s ease;
+        }
+
+        .color-picker:hover {
+          border-color: #42a5f5;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3);
+        }
+
+        .color-picker::-webkit-color-swatch-wrapper {
+          padding: 0;
+        }
+
+        .color-picker::-webkit-color-swatch {
+          border: none;
+          border-radius: 8px;
         }
 
         /* Content Editor */
