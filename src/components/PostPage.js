@@ -20,43 +20,44 @@ export default function PostPage() {
   const [heartBurst, setHeartBurst] = useState([]);
   const [orbitalHearts, setOrbitalHearts] = useState([]);
   const [explosionParticles, setExplosionParticles] = useState([]);
+  const [readProgress, setReadProgress] = useState(0);
 
-  // Check if mobile on mount and resize
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Reading progress bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = document.documentElement;
+      const scrolled = el.scrollTop || document.body.scrollTop;
+      const height = el.scrollHeight - el.clientHeight;
+      setReadProgress(height > 0 ? (scrolled / height) * 100 : 0);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     async function load() {
       try {
         const res = await API.get(`/posts/slug/${slug}`);
-        setPost({
-          ...res.data,
-          liked: res.data.liked || false
-        });
-        
+        setPost({ ...res.data, liked: res.data.liked || false });
+
         const storedReactions = JSON.parse(localStorage.getItem(`post_${slug}_reactions`)) || {};
-        
         if (res.data.comments) {
           const initialReactions = { ...storedReactions };
-          
           res.data.comments.forEach(comment => {
             if (comment._id && comment.reactions) {
               Object.entries(comment.reactions).forEach(([type, count]) => {
                 const key = `${comment._id}-${type}`;
-                if (!initialReactions[key]) {
-                  initialReactions[key] = count;
-                }
+                if (!initialReactions[key]) initialReactions[key] = count;
               });
             }
           });
-          
           if (Object.keys(storedReactions).length === 0 && Object.keys(initialReactions).length > 0) {
             setCommentReactions(initialReactions);
             localStorage.setItem(`post_${slug}_reactions`, JSON.stringify(initialReactions));
@@ -86,31 +87,21 @@ export default function PostPage() {
 
   const handleLike = async () => {
     if (!post) return;
-
     try {
       const res = await API.put(`/posts/${post._id}/like`);
-      setPost(prev => ({
-        ...prev,
-        likes: res.data.likes,
-        liked: res.data.liked
-      }));
-      
+      setPost(prev => ({ ...prev, likes: res.data.likes, liked: res.data.liked }));
+
       if (res.data.liked) {
         setShowHeartAnimation(true);
-        
-        // Create quantum heart burst with spiral pattern
-        const burstHearts = [];
         const heartCount = isMobile ? 20 : 30;
-        
+        const burstHearts = [];
         for (let i = 0; i < heartCount; i++) {
           const spiralTurns = 3;
           const angle = (Math.PI * 2 * spiralTurns * i) / heartCount;
           const distance = 60 + (i / heartCount) * 180;
-          
           burstHearts.push({
             id: `burst-${Date.now()}-${i}`,
-            angle: angle,
-            distance: distance,
+            angle, distance,
             size: 0.4 + Math.random() * 1.2,
             rotation: Math.random() * 720,
             delay: i * 25,
@@ -118,8 +109,6 @@ export default function PostPage() {
             type: ['❤️', '💖', '💕', '💗', '💓'][Math.floor(Math.random() * 5)]
           });
         }
-        
-        // Create orbital hearts
         const orbits = [];
         for (let i = 0; i < (isMobile ? 8 : 12); i++) {
           const orbitRadius = 100 + (i % 3) * 40;
@@ -132,8 +121,6 @@ export default function PostPage() {
             delay: i * 50
           });
         }
-        
-        // Create explosion particles
         const particles = [];
         for (let i = 0; i < (isMobile ? 30 : 50); i++) {
           const angle = Math.random() * Math.PI * 2;
@@ -147,11 +134,9 @@ export default function PostPage() {
             delay: i * 10
           });
         }
-        
         setHeartBurst(burstHearts);
         setOrbitalHearts(orbits);
         setExplosionParticles(particles);
-        
         setTimeout(() => {
           setShowHeartAnimation(false);
           setHeartBurst([]);
@@ -168,7 +153,6 @@ export default function PostPage() {
   const submitComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
     try {
       await API.post(`/posts/${post._id}/comments`, { text: commentText });
       const res = await API.get(`/posts/slug/${slug}`);
@@ -182,1213 +166,1395 @@ export default function PostPage() {
 
   const handleCommentReaction = (commentId, reactionType, emoji) => {
     if (!post) return;
-    
     const reactionKey = `${commentId}-${reactionType}`;
     const userReactionsKey = `${commentId}`;
     const currentUserReactions = { ...userReactedComments };
-    
     const userHasReacted = currentUserReactions[userReactionsKey];
-    
+
     if (userHasReacted === reactionType) {
       const updatedReactions = { ...commentReactions };
       const currentCount = updatedReactions[reactionKey] || 0;
-      
       if (currentCount > 0) {
         updatedReactions[reactionKey] = currentCount - 1;
         delete currentUserReactions[userReactionsKey];
-        
         setCommentReactions(updatedReactions);
         setUserReactedComments(currentUserReactions);
-        
         localStorage.setItem(`post_${slug}_reactions`, JSON.stringify(updatedReactions));
         localStorage.setItem(`user_reactions_${slug}`, JSON.stringify(currentUserReactions));
       }
     } else if (userHasReacted) {
       const updatedReactions = { ...commentReactions };
-      
       const previousReactionKey = `${commentId}-${userHasReacted}`;
       const previousCount = updatedReactions[previousReactionKey] || 0;
-      if (previousCount > 0) {
-        updatedReactions[previousReactionKey] = previousCount - 1;
-      }
-      
-      const newReactionCount = updatedReactions[reactionKey] || 0;
-      updatedReactions[reactionKey] = newReactionCount + 1;
-      
+      if (previousCount > 0) updatedReactions[previousReactionKey] = previousCount - 1;
+      updatedReactions[reactionKey] = (updatedReactions[reactionKey] || 0) + 1;
       currentUserReactions[userReactionsKey] = reactionType;
-      
       setCommentReactions(updatedReactions);
       setUserReactedComments(currentUserReactions);
-      
       localStorage.setItem(`post_${slug}_reactions`, JSON.stringify(updatedReactions));
       localStorage.setItem(`user_reactions_${slug}`, JSON.stringify(currentUserReactions));
-      
       triggerReactionAnimation(commentId, reactionType, emoji);
     } else {
       const updatedReactions = { ...commentReactions };
-      const currentCount = updatedReactions[reactionKey] || 0;
-      
-      updatedReactions[reactionKey] = currentCount + 1;
+      updatedReactions[reactionKey] = (updatedReactions[reactionKey] || 0) + 1;
       currentUserReactions[userReactionsKey] = reactionType;
-      
       setCommentReactions(updatedReactions);
       setUserReactedComments(currentUserReactions);
-      
       localStorage.setItem(`post_${slug}_reactions`, JSON.stringify(updatedReactions));
       localStorage.setItem(`user_reactions_${slug}`, JSON.stringify(currentUserReactions));
-      
       triggerReactionAnimation(commentId, reactionType, emoji);
     }
   };
 
   const triggerReactionAnimation = (commentId, reactionType, emoji) => {
     const animKey = `${commentId}-${reactionType}-${Date.now()}`;
-    setReactionAnimations(prev => ({ 
-      ...prev, 
-      [animKey]: { emoji, commentId, reactionType } 
-    }));
-    
+    setReactionAnimations(prev => ({ ...prev, [animKey]: { emoji, commentId, reactionType } }));
     setTimeout(() => {
       setReactionAnimations(prev => {
-        const newAnims = { ...prev };
-        delete newAnims[animKey];
-        return newAnims;
+        const n = { ...prev };
+        delete n[animKey];
+        return n;
       });
     }, 1000);
   };
 
-  // Social Sharing Functions
-  const shareOnFacebook = () => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(post?.title || 'Check out this post!')}`;
-    window.open(url, '_blank', 'width=600,height=400');
-  };
+  const shareOnFacebook = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(post?.title || '')}`, '_blank', 'width=600,height=400');
+  const shareOnTwitter = () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this post: ${post?.title || ''}`)}&url=${encodeURIComponent(window.location.href)}`, '_blank', 'width=600,height=400');
+  const shareOnLinkedIn = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank', 'width=600,height=400');
+  const shareOnInstagram = () => { navigator.clipboard.writeText(window.location.href).then(() => alert('✨ Link copied! Share it on Instagram 📱')).catch(() => alert('Copy: ' + window.location.href)); };
+  const copyToClipboard = () => { navigator.clipboard.writeText(window.location.href).then(() => { setShowShareTooltip(true); setTimeout(() => setShowShareTooltip(false), 2000); }).catch(() => alert('Copy manually: ' + window.location.href)); };
+  const shareViaEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(`✨ ${post?.title || ''}`)}&body=${encodeURIComponent(`I found this article:\n\n${post?.title}\n\n${window.location.href}`)}`; };
+  const shareViaWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${post?.title || ''}\n${window.location.href}`)}`, '_blank');
+  const shareViaTelegram = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post?.title || '')}`, '_blank');
+  const shareViaReddit = () => window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(post?.title || '')}`, '_blank');
 
-  const shareOnTwitter = () => {
-    const text = `Check out this post: ${post?.title || 'Amazing article!'}`;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-    window.open(url, '_blank', 'width=600,height=400');
-  };
+  const hasUserReacted = (commentId, reactionType) => userReactedComments[commentId] === reactionType;
 
-  const shareOnLinkedIn = () => {
-    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
-    window.open(url, '_blank', 'width=600,height=400');
-  };
-
-  const shareOnInstagram = () => {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        alert('✨ Link copied to clipboard! Open Instagram and share the magic! 📱💫');
-      })
-      .catch(() => {
-        alert('✨ Copy this link and share it on Instagram: ' + window.location.href);
-      });
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        setShowShareTooltip(true);
-        setTimeout(() => setShowShareTooltip(false), 2000);
-      })
-      .catch(() => {
-        alert('Failed to copy link. Please copy it manually: ' + window.location.href);
-      });
-  };
-
-  const shareViaEmail = () => {
-    const subject = `✨ ${post?.title || 'Amazing article!'}`;
-    const body = `🌟 I discovered this incredible article and thought you'd love it:\n\n${post?.title}\n\n🔗 Read it here: ${window.location.href}\n\nHappy reading! 📚`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const shareViaWhatsApp = () => {
-    const text = `Check out this amazing post: ${post?.title || 'Great article!'}\n${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const shareViaTelegram = () => {
-    const text = `Check out this post: ${post?.title || 'Great article!'}\n${window.location.href}`;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const shareViaReddit = () => {
-    const title = post?.title || 'Check out this post!';
-    window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(title)}`, '_blank');
-  };
-
-  const hasUserReacted = (commentId, reactionType) => {
-    return userReactedComments[commentId] === reactionType;
-  };
-
-  // Optimized Social Sharing Platforms for Mobile
   const sharePlatforms = [
-    { 
-      platform: 'facebook', 
-      icon: 'f', 
-      color: '#1877F2', 
-      hoverIcon: 'fb',
-      action: shareOnFacebook, 
-      label: 'Facebook',
-      mobileIcon: '𝐟'
-    },
-    { 
-      platform: 'twitter', 
-      icon: '𝕏', 
-      color: '#000000', 
-      hoverIcon: '𝕏→',
-      action: shareOnTwitter, 
-      label: 'Twitter',
-      mobileIcon: '𝕏'
-    },
-    { 
-      platform: 'linkedin', 
-      icon: 'in', 
-      color: '#0077B5', 
-      hoverIcon: 'in↗',
-      action: shareOnLinkedIn, 
-      label: 'LinkedIn',
-      mobileIcon: 'in'
-    },
-    { 
-      platform: 'instagram', 
-      icon: '📸', 
-      color: '#E4405F', 
-      hoverIcon: '✨',
-      action: shareOnInstagram, 
-      label: 'Instagram',
-      mobileIcon: '📸'
-    },
-    { 
-      platform: 'whatsapp', 
-      icon: '💬', 
-      color: '#25D366', 
-      hoverIcon: '📲',
-      action: shareViaWhatsApp, 
-      label: 'WhatsApp',
-      mobileIcon: '💬'
-    },
-    { 
-      platform: 'telegram', 
-      icon: '✈️', 
-      color: '#0088CC', 
-      hoverIcon: '🚀',
-      action: shareViaTelegram, 
-      label: 'Telegram',
-      mobileIcon: '✈️'
-    },
-    { 
-      platform: 'reddit', 
-      icon: '👾', 
-      color: '#FF4500', 
-      hoverIcon: '🔥',
-      action: shareViaReddit, 
-      label: 'Reddit',
-      mobileIcon: '👾'
-    },
-    { 
-      platform: 'email', 
-      icon: '✉️', 
-      color: '#EA4335', 
-      hoverIcon: '📨',
-      action: shareViaEmail, 
-      label: 'Email',
-      mobileIcon: '✉️'
-    },
-    { 
-      platform: 'copy', 
-      icon: '📋', 
-      color: '#9C27B0', 
-      hoverIcon: '✅',
-      action: copyToClipboard, 
-      label: 'Copy Link',
-      mobileIcon: '📋'
-    }
+    { platform: 'facebook', icon: 'f', color: '#1877F2', hoverIcon: 'fb', action: shareOnFacebook, label: 'Facebook', mobileIcon: '𝐟' },
+    { platform: 'twitter', icon: '𝕏', color: '#000000', hoverIcon: '𝕏→', action: shareOnTwitter, label: 'Twitter', mobileIcon: '𝕏' },
+    { platform: 'linkedin', icon: 'in', color: '#0077B5', hoverIcon: 'in↗', action: shareOnLinkedIn, label: 'LinkedIn', mobileIcon: 'in' },
+    { platform: 'instagram', icon: '📸', color: '#E4405F', hoverIcon: '✨', action: shareOnInstagram, label: 'Instagram', mobileIcon: '📸' },
+    { platform: 'whatsapp', icon: '💬', color: '#25D366', hoverIcon: '📲', action: shareViaWhatsApp, label: 'WhatsApp', mobileIcon: '💬' },
+    { platform: 'telegram', icon: '✈️', color: '#0088CC', hoverIcon: '🚀', action: shareViaTelegram, label: 'Telegram', mobileIcon: '✈️' },
+    { platform: 'reddit', icon: '👾', color: '#FF4500', hoverIcon: '🔥', action: shareViaReddit, label: 'Reddit', mobileIcon: '👾' },
+    { platform: 'email', icon: '✉️', color: '#EA4335', hoverIcon: '📨', action: shareViaEmail, label: 'Email', mobileIcon: '✉️' },
+    { platform: 'copy', icon: '📋', color: '#9C27B0', hoverIcon: '✅', action: copyToClipboard, label: 'Copy Link', mobileIcon: '📋' }
   ];
 
-  // Container styles - Enhanced for mobile
-  const containerStyle = {
-    padding: isMobile ? '1rem' : 'clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 1.5rem)',
-    minHeight: '100vh',
-    background: 'linear-gradient(165deg, #0a1929 0%, #132f4c 15%, #1e4976 30%, #2563a0 45%, #3b82c9 60%, #5fa3db 75%, #8fc4ed 90%, #ffffff 100%)',
-    backgroundAttachment: 'fixed',
-    position: 'relative',
-    overflow: 'hidden'
-  };
-
-  const meshOverlayStyle = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: `
-      radial-gradient(circle at 20% 30%, rgba(37, 99, 160, 0.15) 0%, transparent 45%),
-      radial-gradient(circle at 80% 20%, rgba(10, 25, 41, 0.2) 0%, transparent 50%),
-      radial-gradient(circle at 50% 70%, rgba(95, 163, 219, 0.12) 0%, transparent 55%),
-      radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.18) 0%, transparent 40%)
-    `,
-    pointerEvents: 'none',
-    zIndex: 0,
-    animation: 'meshDrift 25s ease-in-out infinite alternate'
-  };
-
-  const articleContainerStyle = {
-    maxWidth: '900px',
-    margin: '0 auto',
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)',
-    backdropFilter: 'blur(60px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(60px) saturate(180%)',
-    borderRadius: isMobile ? '20px' : 'clamp(24px, 5vw, 40px)',
-    padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 5vw, 3.5rem)',
-    boxShadow: `
-      0 30px 90px rgba(10, 25, 41, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3)
-    `,
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    position: 'relative',
-    zIndex: 1,
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word'
-  };
-
-  const titleStyle = {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: isMobile ? '1.75rem' : 'clamp(1.75rem, 5vw, 3.5rem)',
-    lineHeight: '1.2',
-    marginBottom: '1.5rem',
-    letterSpacing: '-0.03em',
-    textShadow: '0 4px 12px rgba(10, 25, 41, 0.4)',
-    background: 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 40%, #90caf9 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word'
-  };
-
-  const metaInfoStyle = {
-    color: '#b3d9f2',
-    fontSize: isMobile ? '0.9rem' : 'clamp(0.9rem, 2vw, 1rem)',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-    textShadow: '0 1px 3px rgba(10, 25, 41, 0.3)'
-  };
-
-  const coverImageStyle = {
-    width: '100%',
-    borderRadius: isMobile ? '12px' : 'clamp(16px, 3vw, 24px)',
-    marginBottom: '1.5rem',
-    boxShadow: '0 20px 60px rgba(10, 25, 41, 0.4)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    overflow: 'hidden'
-  };
-
-  const contentStyle = {
-    color: '#ffffff',
-    fontSize: isMobile ? '1rem' : 'clamp(1rem, 2vw, 1.15rem)',
-    lineHeight: '1.7',
-    marginBottom: '2rem',
-    textShadow: '0 1px 2px rgba(10, 25, 41, 0.2)',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word'
-  };
-
-  const likeButtonStyle = {
-    position: 'relative',
-    marginTop: '2rem',
-    padding: isMobile ? '1rem 1.5rem' : '1.2rem 2.5rem',
-    borderRadius: '24px',
-    border: post?.liked ? '2px solid rgba(255, 107, 157, 0.5)' : '2px solid rgba(255, 255, 255, 0.3)',
-    background: post?.liked 
-      ? 'linear-gradient(135deg, #ff6b9d 0%, #ff4d7d 50%, #ff2e63 100%)'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%)',
-    backdropFilter: 'blur(40px)',
-    color: '#ffffff',
-    cursor: 'pointer',
-    fontWeight: '700',
-    fontSize: '1.1rem',
-    transition: 'all 0.3s ease',
-    boxShadow: post?.liked
-      ? '0 20px 50px rgba(255, 107, 157, 0.4)'
-      : '0 15px 40px rgba(10, 25, 41, 0.3)',
-    width: '100%',
-    maxWidth: '300px',
-    display: 'block',
-    margin: '2rem auto'
-  };
-
-  // Mobile-optimized social sharing
-  const mobileShareBarStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-    justifyContent: 'center',
-    margin: '2rem 0',
-    padding: '1rem',
-    background: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: '20px',
-    backdropFilter: 'blur(20px)'
-  };
-
-  const mobileShareButtonStyle = (platform) => ({
-    flex: '1 0 calc(33.333% - 0.5rem)',
-    minWidth: '70px',
-    maxWidth: '90px',
-    height: '60px',
-    borderRadius: '12px',
-    border: `1px solid ${platform.color}80`,
-    background: `linear-gradient(135deg, ${platform.color}40 0%, ${platform.color}20 100%)`,
-    color: '#ffffff',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '4px',
-    transition: 'all 0.3s ease',
-    fontSize: '1.2rem',
-    fontWeight: '600'
-  });
-
-  const commentsContainerStyle = {
-    marginTop: isMobile ? '2rem' : 'clamp(2.5rem, 5vw, 4rem)',
-    padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 4vw, 2.5rem)',
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-    backdropFilter: 'blur(40px)',
-    WebkitBackdropFilter: 'blur(40px)',
-    borderRadius: isMobile ? '16px' : 'clamp(20px, 4vw, 32px)',
-    border: '1px solid rgba(255, 255, 255, 0.15)',
-    boxShadow: '0 20px 60px rgba(10, 25, 41, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-  };
-
-  const commentsHeaderStyle = {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: isMobile ? '1.3rem' : 'clamp(1.5rem, 4vw, 2rem)',
-    marginBottom: '1rem',
-    textShadow: '0 2px 8px rgba(10, 25, 41, 0.4)'
-  };
-
-  const commentCardStyle = (isHovered) => ({
-    padding: isMobile ? '1rem' : 'clamp(1.2rem, 3vw, 1.8rem)',
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%)',
-    backdropFilter: 'blur(40px)',
-    WebkitBackdropFilter: 'blur(40px)',
-    border: isHovered ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.15)',
-    borderRadius: isMobile ? '12px' : 'clamp(16px, 3vw, 20px)',
-    marginBottom: '1rem',
-    transition: 'all 0.3s ease'
-  });
-
-  const commentAuthorStyle = {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: isMobile ? '0.95rem' : 'clamp(1rem, 2vw, 1.1rem)',
-    marginBottom: '0.5rem',
-    textShadow: '0 1px 3px rgba(10, 25, 41, 0.3)'
-  };
-
-  const commentTextStyle = {
-    color: '#ffffff',
-    fontSize: isMobile ? '0.9rem' : 'clamp(0.95rem, 2vw, 1.05rem)',
-    lineHeight: '1.6',
-    marginTop: '0.75rem',
-    marginBottom: '1rem',
-    textShadow: '0 1px 2px rgba(10, 25, 41, 0.2)',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word'
-  };
-
-  const commentReactionsStyle = {
-    display: 'flex',
-    gap: '0.5rem',
-    marginTop: '1rem',
-    paddingTop: '1rem',
-    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-    flexWrap: 'wrap',
-    position: 'relative'
-  };
-
-  const reactionButtonStyle = (isActive = false) => ({
-    padding: isMobile ? '0.4rem 0.8rem' : 'clamp(0.5rem, 1.5vw, 0.6rem) clamp(0.8rem, 2vw, 1.2rem)',
-    borderRadius: '12px',
-    border: isActive 
-      ? '2px solid rgba(255, 255, 255, 0.4)' 
-      : '1px solid rgba(255, 255, 255, 0.2)',
-    background: isActive
-      ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%)'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    color: '#ffffff',
-    cursor: 'pointer',
-    fontSize: isMobile ? '0.8rem' : 'clamp(0.85rem, 1.8vw, 0.95rem)',
-    fontWeight: '600',
-    transition: 'all 0.3s ease',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    boxShadow: isActive 
-      ? '0 6px 20px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
-      : '0 4px 15px rgba(10, 25, 41, 0.2)',
-    whiteSpace: 'nowrap'
-  });
-
-  const textareaStyle = {
-    width: '100%',
-    padding: isMobile ? '0.8rem' : 'clamp(1rem, 2vw, 1.5rem)',
-    borderRadius: isMobile ? '12px' : 'clamp(16px, 3vw, 20px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%)',
-    backdropFilter: 'blur(40px)',
-    WebkitBackdropFilter: 'blur(40px)',
-    marginBottom: '1rem',
-    color: '#ffffff',
-    fontSize: isMobile ? '0.9rem' : 'clamp(0.95rem, 2vw, 1.05rem)',
-    fontFamily: 'inherit',
-    resize: 'vertical',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 8px 25px rgba(10, 25, 41, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-    boxSizing: 'border-box',
-    minHeight: '100px'
-  };
-
-  const submitButtonStyle = {
-    padding: isMobile ? '0.8rem 1.5rem' : 'clamp(0.9rem, 2vw, 1.1rem) clamp(1.5rem, 4vw, 2.5rem)',
-    borderRadius: isMobile ? '16px' : 'clamp(16px, 3vw, 20px)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    background: commentText.trim() 
-      ? 'linear-gradient(135deg, #0a1929 0%, #1e4976 50%, #2563a0 100%)'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
-    backdropFilter: 'blur(40px)',
-    WebkitBackdropFilter: 'blur(40px)',
-    color: '#ffffff',
-    cursor: commentText.trim() ? 'pointer' : 'not-allowed',
-    fontWeight: '700',
-    fontSize: isMobile ? '0.9rem' : 'clamp(0.95rem, 2vw, 1.05rem)',
-    transition: 'all 0.3s ease',
-    opacity: commentText.trim() ? 1 : 0.6,
-    letterSpacing: '0.02em',
-    width: '100%'
-  };
-
-  const noCommentsStyle = {
-    textAlign: 'center',
-    padding: isMobile ? '1.5rem' : 'clamp(2rem, 4vw, 3rem)',
-    color: '#ffffff',
-    fontSize: isMobile ? '0.9rem' : 'clamp(1rem, 2vw, 1.1rem)',
-    opacity: 0.8
-  };
-
+  // Loading state
   if (!post) {
     return (
-      <div style={containerStyle}>
-        <div style={meshOverlayStyle} />
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          flexDirection: 'column',
-          gap: '2rem',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <div style={{
-            width: 'clamp(50px, 10vw, 70px)',
-            height: 'clamp(50px, 10vw, 70px)',
-            border: '5px solid rgba(255, 255, 255, 0.15)',
-            borderTop: '5px solid #90caf9',
-            borderRadius: '50%',
-            animation: 'spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite'
-          }}></div>
-          <div style={{
-            color: '#ffffff',
-            fontWeight: '600',
-            fontSize: isMobile ? '1rem' : 'clamp(1rem, 2vw, 1.2rem)',
-            textShadow: '0 2px 8px rgba(10, 25, 41, 0.4)'
-          }}>
-            Loading article...
-          </div>
+      <div className="pp-root">
+        <div className="pp-bg-base" />
+        <div className="pp-bg-orb pp-orb-1" />
+        <div className="pp-bg-orb pp-orb-2" />
+        <div className="pp-bg-orb pp-orb-3" />
+        <div className="pp-bg-lines" />
+        <div className="pp-loading">
+          <div className="pp-loading-ring"><div /><div /><div /><div /></div>
+          <p className="pp-loading-text">Loading article…</p>
         </div>
+        <style>{ppStyles}</style>
       </div>
     );
   }
 
   return (
-    <div style={containerStyle}>
-      <style>
-        {`
-          @keyframes meshDrift {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
-            33% { transform: translate(6%, -4%) scale(1.08) rotate(2deg); opacity: 0.88; }
-            66% { transform: translate(-4%, 5%) scale(0.96) rotate(-1deg); opacity: 0.92; }
-            100% { transform: translate(-6%, -3%) scale(1.04) rotate(1deg); opacity: 0.9; }
-          }
-          
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          
-          @keyframes quantumPulse {
-            0% { 
-              transform: translate(-50%, -50%) scale(0) rotate(0deg);
-              opacity: 0;
-              filter: hue-rotate(0deg) brightness(1);
-            }
-            15% { 
-              transform: translate(-50%, -50%) scale(3) rotate(180deg);
-              opacity: 1;
-              filter: hue-rotate(45deg) brightness(1.5);
-            }
-            30% {
-              transform: translate(-50%, -50%) scale(2.5) rotate(-90deg);
-              opacity: 0.9;
-              filter: hue-rotate(90deg) brightness(1.3);
-            }
-            50% {
-              transform: translate(-50%, -50%) scale(2.8) rotate(45deg);
-              opacity: 0.8;
-              filter: hue-rotate(180deg) brightness(1.4);
-            }
-            70% {
-              transform: translate(-50%, -50%) scale(2.2) rotate(-45deg);
-              opacity: 0.6;
-              filter: hue-rotate(270deg) brightness(1.2);
-            }
-            100% { 
-              transform: translate(-50%, -50%) scale(0.1) rotate(360deg);
-              opacity: 0;
-              filter: hue-rotate(360deg) brightness(1);
-            }
-          }
-          
-          @keyframes spiralBurst {
-            0% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(0) rotate(0deg);
-            }
-            20% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1.3) rotate(var(--start-rotation));
-            }
-            100% {
-              opacity: 0;
-              transform: translate(
-                calc(-50% + var(--x)),
-                calc(-50% + var(--y))
-              ) scale(0.1) rotate(calc(var(--start-rotation) + 720deg));
-            }
-          }
-          
-          @keyframes orbitalSpin {
-            0% {
-              transform: rotate(var(--start-angle)) translateX(var(--radius)) rotate(calc(-1 * var(--start-angle))) scale(0);
-              opacity: 0;
-            }
-            10% {
-              opacity: 1;
-              transform: rotate(var(--start-angle)) translateX(var(--radius)) rotate(calc(-1 * var(--start-angle))) scale(1.2);
-            }
-            100% {
-              opacity: 0.3;
-              transform: rotate(calc(var(--start-angle) + 360deg * var(--speed))) translateX(var(--radius)) rotate(calc(-1 * (var(--start-angle) + 360deg * var(--speed)))) scale(0.3);
-            }
-          }
-          
-          @keyframes particleExplosion {
-            0% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1);
-            }
-            100% {
-              opacity: 0;
-              transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0);
-            }
-          }
-          
-          @keyframes shockwave {
-            0% {
-              transform: translate(-50%, -50%) scale(0);
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.6;
-            }
-            100% {
-              transform: translate(-50%, -50%) scale(4);
-              opacity: 0;
-            }
-          }
-          
-          @keyframes energyRing {
-            0% {
-              transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
-              opacity: 0;
-            }
-            50% {
-              opacity: 1;
-            }
-            100% {
-              transform: translate(-50%, -50%) scale(3.5) rotate(180deg);
-              opacity: 0;
-            }
-          }
-          
-          @keyframes reactionPop {
-            0% { transform: scale(0) rotate(0deg); opacity: 0; }
-            50% { transform: scale(1.5) rotate(15deg); opacity: 1; }
-            100% { transform: translateY(-60px) scale(0.3) rotate(0deg); opacity: 0; }
-          }
-          
-          @keyframes slideUp { 
-            0% { transform: translate(-50%, 20px); opacity: 0; } 
-            100% { transform: translate(-50%, 0); opacity: 1; } 
-          }
-          
-          textarea::placeholder { color: rgba(255, 255, 255, 0.5); }
-          textarea:focus { 
-            outline: none; 
-            border-color: rgba(255, 255, 255, 0.4); 
-            boxShadow: 0 12px 35px rgba(10, 25, 41, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25); 
-          }
-          
-          button:hover:not(:disabled) { transform: translateY(-2px); }
-          button:active:not(:disabled) { transform: translateY(-1px) scale(0.98); }
-          
-          /* Mobile specific styles */
-          @media (max-width: 480px) {
-            .mobile-share-label {
-              font-size: 0.7rem;
-              margin-top: 2px;
-            }
-            
-            .comment-reaction {
-              padding: 0.3rem 0.6rem !important;
-              font-size: 0.75rem !important;
-            }
-          }
-        `}
-      </style>
+    <div className="pp-root">
+      <style>{ppStyles}</style>
 
-      {/* Quantum Heart Animation System */}
+      {/* Reading Progress Bar */}
+      <div className="pp-progress-bar" style={{ width: `${readProgress}%` }} />
+
+      {/* Background layers */}
+      <div className="pp-bg-base" />
+      <div className="pp-bg-noise" />
+      <div className="pp-bg-orb pp-orb-1" />
+      <div className="pp-bg-orb pp-orb-2" />
+      <div className="pp-bg-orb pp-orb-3" />
+      <div className="pp-bg-lines" />
+
+      {/* Quantum Heart Animation */}
       {showHeartAnimation && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          width: '100vw',
-          height: '100vh'
-        }}>
-          {/* Shockwave rings */}
-          {[0, 0.2, 0.4, 0.6].map((delay, i) => (
-            <div
-              key={`shock-${i}`}
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: '200px',
-                height: '200px',
-                border: `${4 - i}px solid rgba(255, ${107 - i * 20}, ${157 - i * 20}, ${0.8 - i * 0.15})`,
-                borderRadius: '50%',
-                animation: `shockwave 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s forwards`
-              }}
-            />
+        <div className="pp-heart-canvas">
+          {/* Rainbow shockwave bursts */}
+          {[
+            { delay: 0,   color: '#ff0055', size: 160 },
+            { delay: 0.1, color: '#ff6600', size: 140 },
+            { delay: 0.2, color: '#ffdd00', size: 120 },
+            { delay: 0.3, color: '#00ff99', size: 100 },
+            { delay: 0.4, color: '#6644ff', size: 80  },
+          ].map((s, i) => (
+            <div key={`shock-${i}`} className="pp-shockwave" style={{
+              animationDelay: `${s.delay}s`,
+              borderWidth: `${4 - i * 0.5}px`,
+              borderColor: s.color,
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              boxShadow: `0 0 30px ${s.color}80, inset 0 0 20px ${s.color}40`
+            }} />
+          ))}
+          {/* Spinning energy rings */}
+          {['#ff0055','#ffdd00','#00ff99'].map((color, i) => (
+            <div key={`energy-${i}`} className="pp-energy-ring" style={{ animationDelay: `${i * 0.15}s`, borderColor: color, opacity: 0.7 - i * 0.15, boxShadow: `0 0 15px ${color}` }} />
+          ))}
+          {/* Rainbow screen flash */}
+          <div className="pp-screen-flash" />
+
+          {/* Rainbow CSS heart - cycles through 5 colors */}
+          <div className="pp-main-heart" style={{ width: isMobile ? '80px' : '150px', height: isMobile ? '80px' : '150px' }}>
+            <div className="pp-heart-shape pp-rainbow-heart" />
+          </div>
+
+          {/* Rainbow shockwave rings */}
+          {['#ff0000','#ff8800','#ffff00','#00ff88','#0088ff'].map((color, i) => (
+            <div key={`rainbow-shock-${i}`} className="pp-rainbow-ring" style={{ animationDelay: `${i * 0.12}s`, borderColor: color, boxShadow: `0 0 20px ${color}, inset 0 0 20px ${color}40` }} />
           ))}
 
-          {/* Energy rings */}
-          {[0, 0.15, 0.3].map((delay, i) => (
-            <div
-              key={`energy-${i}`}
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: '180px',
-                height: '180px',
-                border: `3px solid rgba(255, 107, 157, ${0.6 - i * 0.15})`,
-                borderRadius: '50%',
-                borderStyle: 'dashed',
-                animation: `energyRing 2s ease-out ${delay}s forwards`
-              }}
-            />
+          {/* Bouncing satellite hearts */}
+          {['#ff0055','#ff6600','#ffdd00','#00ff99','#6644ff'].map((color, i) => (
+            <div key={`sat-${i}`} className="pp-satellite-heart" style={{ '--sat-angle': `${i * 72}deg`, '--sat-color': color, animationDelay: `${i * 0.08}s` }}>
+              <div className="pp-heart-shape" style={{ background: color, width: isMobile ? '24px' : '36px', height: isMobile ? '24px' : '36px', boxShadow: `0 0 20px ${color}, 0 0 40px ${color}80` }} />
+            </div>
           ))}
-          
-          {/* Main quantum heart with morphing effect */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            fontSize: isMobile ? '5rem' : '10rem',
-            animation: 'quantumPulse 3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-            filter: 'drop-shadow(0 0 60px rgba(255, 107, 157, 1)) drop-shadow(0 0 120px rgba(255, 46, 99, 0.8))',
-            textShadow: '0 0 40px rgba(255, 255, 255, 1)',
-            willChange: 'transform, opacity, filter'
-          }}>
-            ❤️
-          </div>
-          
-          {/* Spiral constellation burst */}
           {heartBurst.map((heart) => {
             const x = Math.cos(heart.angle) * heart.distance;
             const y = Math.sin(heart.angle) * heart.distance;
-            
             return (
-              <div
-                key={heart.id}
-                style={{
-                  '--x': `${x}px`,
-                  '--y': `${y}px`,
-                  '--start-rotation': `${heart.rotation}deg`,
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  fontSize: `${heart.size}rem`,
-                  animation: `spiralBurst 2s cubic-bezier(0.34, 1.56, 0.64, 1) ${heart.delay}ms forwards`,
-                  filter: `drop-shadow(0 0 20px ${heart.color}) drop-shadow(0 0 35px ${heart.color})`,
-                  color: heart.color,
-                  willChange: 'transform, opacity'
-                }}
-              >
+              <div key={heart.id} className="pp-spiral-heart" style={{ '--x': `${x}px`, '--y': `${y}px`, '--start-rotation': `${heart.rotation}deg`, fontSize: `${heart.size}rem`, animationDelay: `${heart.delay}ms`, filter: `drop-shadow(0 0 20px ${heart.color})`, color: heart.color }}>
                 {heart.type}
               </div>
             );
           })}
-
-          {/* Orbital hearts */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '1px',
-            height: '1px'
-          }}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', width: '1px', height: '1px' }}>
             {orbitalHearts.map((orbit) => (
-              <div
-                key={orbit.id}
-                style={{
-                  '--radius': `${orbit.radius}px`,
-                  '--speed': orbit.speed,
-                  '--start-angle': `${orbit.startAngle}rad`,
-                  position: 'absolute',
-                  fontSize: `${orbit.size}rem`,
-                  animation: `orbitalSpin 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${orbit.delay}ms forwards`,
-                  filter: 'drop-shadow(0 0 15px rgba(255, 107, 157, 0.8))',
-                  willChange: 'transform, opacity'
-                }}
-              >
-                💖
-              </div>
+              <div key={orbit.id} className="pp-orbital-heart" style={{ '--radius': `${orbit.radius}px`, '--speed': orbit.speed, '--start-angle': `${orbit.startAngle}rad`, fontSize: `${orbit.size}rem`, animationDelay: `${orbit.delay}ms` }}>💖</div>
             ))}
           </div>
-          
-          {/* Explosion particles */}
-          {explosionParticles.map((particle) => (
-            <div
-              key={particle.id}
-              style={{
-                '--x': `${particle.x}px`,
-                '--y': `${particle.y}px`,
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: `${particle.size}px`,
-                height: `${particle.size}px`,
-                background: particle.color,
-                borderRadius: '50%',
-                animation: `particleExplosion 1.5s ease-out ${particle.delay}ms forwards`,
-                boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
-                willChange: 'transform, opacity'
-              }}
-            />
+          {explosionParticles.map((p) => (
+            <div key={p.id} className="pp-particle" style={{ '--x': `${p.x}px`, '--y': `${p.y}px`, width: `${p.size}px`, height: `${p.size}px`, background: p.color, animationDelay: `${p.delay}ms`, boxShadow: `0 0 ${p.size * 2}px ${p.color}` }} />
           ))}
-          
-          {/* Sparkle shower */}
           {[...Array(isMobile ? 15 : 25)].map((_, i) => {
             const angle = (Math.PI * 2 * i) / (isMobile ? 15 : 25);
-            const distance = 120 + Math.random() * 100;
-            const x = Math.cos(angle) * distance;
-            const y = Math.sin(angle) * distance;
-            
+            const dist = 120 + Math.random() * 100;
             return (
-              <div
-                key={`sparkle-${i}`}
-                style={{
-                  '--x': `${x}px`,
-                  '--y': `${y}px`,
-                  '--start-rotation': `${Math.random() * 360}deg`,
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  fontSize: '2rem',
-                  animation: `spiralBurst 1.8s ease-out ${i * 40}ms forwards`,
-                  filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 1))',
-                  opacity: 0.9
-                }}
-              >
+              <div key={`sparkle-${i}`} className="pp-spiral-heart" style={{ '--x': `${Math.cos(angle) * dist}px`, '--y': `${Math.sin(angle) * dist}px`, '--start-rotation': `${Math.random() * 360}deg`, fontSize: '2rem', animationDelay: `${i * 40}ms`, filter: 'drop-shadow(0 0 15px rgba(255,255,255,1))' }}>
                 {['✨', '⭐', '💫', '🌟'][i % 4]}
               </div>
             );
           })}
-
-          {/* Center glow */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '300px',
-            height: '300px',
-            background: 'radial-gradient(circle, rgba(255, 107, 157, 0.4) 0%, transparent 70%)',
-            borderRadius: '50%',
-            transform: 'translate(-50%, -50%)',
-            animation: 'shockwave 2s ease-out forwards',
-            filter: 'blur(30px)'
-          }} />
+          <div className="pp-center-glow" />
         </div>
       )}
 
-      {/* Reaction Animations */}
+      {/* Reaction animations */}
       {Object.entries(reactionAnimations).map(([key, { emoji }]) => (
-        <div
-          key={key}
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            fontSize: isMobile ? '2rem' : '4rem',
-            animation: 'reactionPop 1s ease-out',
-            pointerEvents: 'none',
-            zIndex: 9999,
-            filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.8))',
-            transform: 'translate(-50%, -50%)'
-          }}
-        >
-          {emoji}
-        </div>
+        <div key={key} className="pp-reaction-pop" style={{ fontSize: isMobile ? '2rem' : '4rem' }}>{emoji}</div>
       ))}
 
-      {/* Copy Link Tooltip */}
+      {/* Share tooltip */}
       {showShareTooltip && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'linear-gradient(135deg, rgba(156, 39, 176, 0.9) 0%, rgba(123, 31, 162, 0.9) 100%)',
-          color: 'white',
-          padding: '12px 24px',
-          borderRadius: '50px',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 15px 40px rgba(0, 0, 0, 0.4)',
-          zIndex: 10000,
-          animation: 'slideUp 0.3s ease-out',
-          fontWeight: '700',
-          fontSize: '0.95rem',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span>✨</span> Link copied to clipboard!
-        </div>
+        <div className="pp-share-toast">✨ Link copied to clipboard!</div>
       )}
 
-      <div style={meshOverlayStyle} />
-      <div style={articleContainerStyle}>
-        <h1 style={titleStyle}>{post.title}</h1>
-        <p style={metaInfoStyle}>Posted: {new Date(post.createdAt).toLocaleString()}</p>
-        
-        {post.coverImage && (
-          <img 
-            src={post.coverImage} 
-            alt="cover" 
-            style={coverImageStyle}
-          />
-        )}
-        
-        <div 
-          style={contentStyle}
-          dangerouslySetInnerHTML={{ __html: post.content }} 
-        />
+      {/* Main article wrapper */}
+      <div className="pp-outer">
 
-        {/* Like button */}
-        <button
-          onClick={handleLike}
-          style={likeButtonStyle}
-          onMouseEnter={(e) => {
-            if (!isMobile) {
-              e.currentTarget.style.transform = 'scale(1.05) translateY(-3px)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          {post.liked ? `❤️ Liked (${post.likes || 0})` : `🤍 Like (${post.likes || 0})`}
-        </button>
+        {/* Article card */}
+        <article className="pp-article-card">
+          <div className="pp-article-top-line" />
 
-        {/* Social Sharing Section */}
-        <div style={{ margin: '3rem 0' }}>
-          <h3 style={{
-            color: '#ffffff',
-            textAlign: 'center',
-            marginBottom: isMobile ? '1rem' : '1.5rem',
-            fontSize: isMobile ? '1.2rem' : '1.5rem',
-            fontWeight: '700'
-          }}>
-            Share this post
-          </h3>
-          
-          {isMobile ? (
-            // Mobile Optimized Share Bar
-            <div style={mobileShareBarStyle}>
-              {sharePlatforms.slice(0, 6).map((platform) => (
-                <button
-                  key={platform.platform}
-                  onClick={platform.action}
-                  style={mobileShareButtonStyle(platform)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = `linear-gradient(135deg, ${platform.color}60 0%, ${platform.color}40 100%)`;
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = `0 8px 20px ${platform.color}40`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = `linear-gradient(135deg, ${platform.color}40 0%, ${platform.color}20 100%)`;
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                  title={platform.label}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>{platform.mobileIcon}</span>
-                  <span className="mobile-share-label" style={{
-                    fontSize: '0.7rem',
-                    color: '#ffffff',
-                    fontWeight: '600'
-                  }}>
-                    {platform.platform}
-                  </span>
-                </button>
-              ))}
-              
-              {/* More Options Button for Mobile */}
-              <button
-                onClick={copyToClipboard}
-                style={{
-                  flex: '1 0 calc(33.333% - 0.5rem)',
-                  minWidth: '70px',
-                  maxWidth: '90px',
-                  height: '60px',
-                  borderRadius: '12px',
-                  border: '1px solid #9C27B080',
-                  background: 'linear-gradient(135deg, #9C27B040 0%, #9C27B020 100%)',
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  transition: 'all 0.3s ease',
-                  fontSize: '1.2rem',
-                  fontWeight: '600'
-                }}
-                title="More options"
-              >
-                <span>⋯</span>
-                <span className="mobile-share-label" style={{
-                  fontSize: '0.7rem',
-                  color: '#ffffff',
-                  fontWeight: '600'
-                }}>
-                  More
-                </span>
-              </button>
+          {/* Header */}
+          <header className="pp-article-header">
+            <div className="pp-article-eyebrow">
+              <span className="pp-eyebrow-dot" />
+              {post.published ? 'Published Article' : 'Draft'}
+              <span className="pp-eyebrow-dot" />
             </div>
-          ) : (
-            // Desktop Galaxy View
-            <div style={{
-              margin: '3rem 0',
-              height: '300px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              overflow: 'hidden',
-              position: 'relative'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '300px',
-                height: '300px',
-                borderRadius: '50%',
-                background: `radial-gradient(circle at 30% 30%, 
-                  rgba(255, 107, 157, 0.1) 0%, 
-                  rgba(95, 163, 219, 0.08) 40%,
-                  rgba(37, 99, 160, 0.05) 70%,
-                  transparent 100%)`,
-                animation: 'meshDrift 8s ease-in-out infinite',
-                filter: 'blur(20px)',
-                opacity: 0.6
-              }}></div>
-              
-              {sharePlatforms.map((platform, index) => {
-                const angle = (index / sharePlatforms.length) * 360;
-                const distance = 120;
-                const x = Math.cos((angle * Math.PI) / 180) * distance;
-                const y = Math.sin((angle * Math.PI) / 180) * distance;
-                const isHovered = hoveredShare === platform.platform;
-                
-                return (
+
+            <h1 className="pp-title">{post.title}</h1>
+
+            <div className="pp-meta-row">
+              <div className="pp-meta-item">
+                <span className="pp-meta-icon">📅</span>
+                <span>{new Date(post.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              </div>
+              <div className="pp-meta-item">
+                <span className="pp-meta-icon">❤️</span>
+                <span>{post.likes || 0} likes</span>
+              </div>
+              <div className="pp-meta-item">
+                <span className="pp-meta-icon">💬</span>
+                <span>{post.comments?.length || 0} comments</span>
+              </div>
+            </div>
+          </header>
+
+          {/* Cover image */}
+          {post.coverImage && (
+            <div className="pp-cover-wrap">
+              <img src={post.coverImage} alt={post.title} className="pp-cover-img" />
+              <div className="pp-cover-overlay" />
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="pp-content" dangerouslySetInnerHTML={{ __html: post.content }} />
+
+          {/* Tags */}
+          {post.tags && (
+            <div className="pp-tags-row">
+              {(Array.isArray(post.tags) ? post.tags : post.tags.split(',')).map((tag, i) => (
+                <span key={i} className="pp-tag">{tag.trim()}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="pp-section-divider">
+            <span className="pp-divider-line" />
+            <span className="pp-divider-diamond">◇</span>
+            <span className="pp-divider-line" />
+          </div>
+
+          {/* Like button */}
+          <div className="pp-like-wrap">
+            <button
+              onClick={handleLike}
+              className={`pp-like-btn ${post.liked ? 'pp-like-btn-active' : ''}`}
+            >
+              <span className="pp-like-icon">{post.liked ? '❤️' : '🤍'}</span>
+              <span className="pp-like-text">{post.liked ? `Liked` : `Like this post`}</span>
+              <span className="pp-like-count">{post.likes || 0}</span>
+              <span className="pp-like-glow" />
+            </button>
+          </div>
+
+          {/* Share Section */}
+          <div className="pp-share-section">
+            <div className="pp-share-heading">
+              <span className="pp-share-line" />
+              <h3 className="pp-share-title">Share this story</h3>
+              <span className="pp-share-line" />
+            </div>
+
+            {isMobile ? (
+              <div className="pp-share-mobile-grid">
+                {sharePlatforms.slice(0, 6).map((platform) => (
                   <button
                     key={platform.platform}
                     onClick={platform.action}
-                    onMouseEnter={() => setHoveredShare(platform.platform)}
-                    onMouseLeave={() => setHoveredShare(null)}
-                    style={{
-                      position: 'absolute',
-                      top: `calc(50% + ${y}px)`,
-                      left: `calc(50% + ${x}px)`,
-                      transform: `translate(-50%, -50%) scale(${isHovered ? 1.3 : 1})`,
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '50%',
-                      background: isHovered ? 
-                        `radial-gradient(circle at 30% 30%, ${platform.color}80 0%, ${platform.color}60 70%, ${platform.color}40 100%)` :
-                        `radial-gradient(circle at 30% 30%, ${platform.color}40 0%, ${platform.color}20 70%, ${platform.color}10 100%)`,
-                      border: isHovered ? 
-                        `2px solid ${platform.color}` :
-                        `1.5px solid ${platform.color}80`,
-                      color: '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.2rem',
-                      fontWeight: '600',
-                      transition: 'all 0.3s ease',
-                      boxShadow: isHovered ?
-                        `0 0 30px ${platform.color}80, inset 0 1px 0 rgba(255, 255, 255, 0.4)` :
-                        `0 8px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)`,
-                      zIndex: isHovered ? 20 : 5
-                    }}
+                    className="pp-share-mobile-btn"
+                    style={{ '--platform-color': platform.color }}
                     title={platform.label}
                   >
-                    {isHovered ? platform.hoverIcon : platform.icon}
+                    <span className="pp-share-mobile-icon">{platform.mobileIcon}</span>
+                    <span className="pp-share-mobile-label">{platform.label}</span>
                   </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                ))}
+                <button onClick={copyToClipboard} className="pp-share-mobile-btn" style={{ '--platform-color': '#9C27B0' }} title="Copy Link">
+                  <span className="pp-share-mobile-icon">📋</span>
+                  <span className="pp-share-mobile-label">Copy</span>
+                </button>
+                <button onClick={shareViaEmail} className="pp-share-mobile-btn" style={{ '--platform-color': '#EA4335' }} title="Email">
+                  <span className="pp-share-mobile-icon">✉️</span>
+                  <span className="pp-share-mobile-label">Email</span>
+                </button>
+                <button onClick={shareViaReddit} className="pp-share-mobile-btn" style={{ '--platform-color': '#FF4500' }} title="Reddit">
+                  <span className="pp-share-mobile-icon">👾</span>
+                  <span className="pp-share-mobile-label">Reddit</span>
+                </button>
+              </div>
+            ) : (
+              <div className="pp-share-galaxy">
+                <div className="pp-galaxy-core">
+                  <span className="pp-galaxy-icon">✦</span>
+                  <span className="pp-galaxy-label">Share</span>
+                </div>
+                <div className="pp-galaxy-ring pp-ring-1" />
+                <div className="pp-galaxy-ring pp-ring-2" />
+                {sharePlatforms.map((platform, index) => {
+                  const angle = (index / sharePlatforms.length) * 360;
+                  const distance = 130;
+                  const x = Math.cos((angle * Math.PI) / 180) * distance;
+                  const y = Math.sin((angle * Math.PI) / 180) * distance;
+                  const isHov = hoveredShare === platform.platform;
+                  return (
+                    <button
+                      key={platform.platform}
+                      onClick={platform.action}
+                      onMouseEnter={() => setHoveredShare(platform.platform)}
+                      onMouseLeave={() => setHoveredShare(null)}
+                      className={`pp-galaxy-btn ${isHov ? 'pp-galaxy-btn-hov' : ''}`}
+                      style={{
+                        top: `calc(50% + ${y}px)`,
+                        left: `calc(50% + ${x}px)`,
+                        '--platform-color': platform.color
+                      }}
+                      title={platform.label}
+                    >
+                      <span className="pp-galaxy-btn-icon">{isHov ? platform.hoverIcon : platform.icon}</span>
+                      {isHov && <span className="pp-galaxy-btn-tooltip">{platform.label}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </article>
 
         {/* Comments Section */}
-        <div style={commentsContainerStyle}>
-          <h3 style={commentsHeaderStyle}>
-            💬 Comments ({post.comments ? post.comments.length : 0})
-          </h3>
+        <section className="pp-comments-card">
+          <div className="pp-comments-top-line" />
+
+          <div className="pp-comments-header">
+            <div className="pp-comments-eyebrow">DISCUSSION</div>
+            <h3 className="pp-comments-title">
+              Comments
+              <span className="pp-comments-count">{post.comments?.length || 0}</span>
+            </h3>
+          </div>
 
           {(!post.comments || post.comments.length === 0) && (
-            <p style={noCommentsStyle}>
-              No comments yet. Be the first to share your thoughts! 💭
-            </p>
+            <div className="pp-no-comments">
+              <div className="pp-no-comments-icon">💭</div>
+              <p className="pp-no-comments-text">No comments yet — be the first to share your thoughts.</p>
+            </div>
           )}
 
-          {post.comments && post.comments.map((c, index) => {
-            const commentId = c._id || `comment-${index}`;
-            return (
-              <div 
-                key={commentId} 
-                style={commentCardStyle(hoveredComment === commentId)}
-                onMouseEnter={() => !isMobile && setHoveredComment(commentId)}
-                onMouseLeave={() => !isMobile && setHoveredComment(null)}
-              >
-                <div>
-                  <strong style={commentAuthorStyle}>
-                    {c.authorName || 'Guest'}
-                  </strong>
-                  <small style={{
-                    color: '#90caf9',
-                    fontSize: '0.8rem',
-                    marginLeft: '0.5rem',
-                    opacity: 0.8,
-                    display: 'inline-block'
-                  }}>
-                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
-                  </small>
-                </div>
-                <p style={commentTextStyle}>
-                  {c.text || c.content || String(c)}
-                </p>
-                
-                {/* Comment Reactions */}
-                <div style={commentReactionsStyle}>
-                  <button 
-                    style={reactionButtonStyle(hasUserReacted(commentId, 'like'))}
-                    onClick={() => handleCommentReaction(commentId, 'like', '👍')}
-                    className="comment-reaction"
-                  >
-                    👍 Like
-                    {commentReactions[`${commentId}-like`] > 0 && (
-                      <span style={{ marginLeft: '0.3rem', fontSize: '0.85em', opacity: 0.9 }}>
-                        ({commentReactions[`${commentId}-like`]})
-                      </span>
-                    )}
-                  </button>
-                  <button 
-                    style={reactionButtonStyle(hasUserReacted(commentId, 'love'))}
-                    onClick={() => handleCommentReaction(commentId, 'love', '❤️')}
-                    className="comment-reaction"
-                  >
-                    ❤️ Love
-                    {commentReactions[`${commentId}-love`] > 0 && (
-                      <span style={{ marginLeft: '0.3rem', fontSize: '0.85em', opacity: 0.9 }}>
-                        ({commentReactions[`${commentId}-love`]})
-                      </span>
-                    )}
-                  </button>
-                  <button 
-                    style={reactionButtonStyle(hasUserReacted(commentId, 'celebrate'))}
-                    onClick={() => handleCommentReaction(commentId, 'celebrate', '🎉')}
-                    className="comment-reaction"
-                  >
-                    🎉 Celebrate
-                    {commentReactions[`${commentId}-celebrate`] > 0 && (
-                      <span style={{ marginLeft: '0.3rem', fontSize: '0.85em', opacity: 0.9 }}>
-                        ({commentReactions[`${commentId}-celebrate`]})
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          <div className="pp-comments-list">
+            {post.comments && post.comments.map((c, index) => {
+              const commentId = c._id || `comment-${index}`;
+              const isHov = hoveredComment === commentId;
+              return (
+                <div
+                  key={commentId}
+                  className={`pp-comment-card ${isHov ? 'pp-comment-hov' : ''}`}
+                  onMouseEnter={() => !isMobile && setHoveredComment(commentId)}
+                  onMouseLeave={() => !isMobile && setHoveredComment(null)}
+                >
+                  <div className="pp-comment-top-accent" />
+                  <div className="pp-comment-head">
+                    <div className="pp-comment-avatar">
+                      {(c.authorName || 'G').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="pp-comment-meta">
+                      <strong className="pp-comment-author">{c.authorName || 'Guest'}</strong>
+                      <small className="pp-comment-date">
+                        {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                      </small>
+                    </div>
+                  </div>
 
-          {/* Comment Form */}
-          <form onSubmit={submitComment} style={{ marginTop: '2rem' }}>
-            <textarea
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              placeholder="Share your thoughts and join the conversation..."
-              style={textareaStyle}
-              rows={isMobile ? 4 : 5}
-            />
-            <button
-              type="submit"
-              disabled={!commentText.trim()}
-              style={submitButtonStyle}
-            >
-              💬 Post Comment
-            </button>
-          </form>
+                  <p className="pp-comment-text">{c.text || c.content || String(c)}</p>
+
+                  <div className="pp-reactions-row">
+                    {[
+                      { type: 'like', emoji: '👍', label: 'Like' },
+                      { type: 'love', emoji: '❤️', label: 'Love' },
+                      { type: 'celebrate', emoji: '🎉', label: 'Celebrate' },
+                    ].map(({ type, emoji, label }) => (
+                      <button
+                        key={type}
+                        className={`pp-reaction-btn ${hasUserReacted(commentId, type) ? 'pp-reaction-active' : ''}`}
+                        onClick={() => handleCommentReaction(commentId, type, emoji)}
+                      >
+                        {emoji} {label}
+                        {commentReactions[`${commentId}-${type}`] > 0 && (
+                          <span className="pp-reaction-count">
+                            {commentReactions[`${commentId}-${type}`]}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Comment form */}
+          <div className="pp-comment-form-wrap">
+            <div className="pp-form-heading">Leave a comment</div>
+            <form onSubmit={submitComment} className="pp-comment-form">
+              <textarea
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Share your thoughts and join the conversation…"
+                className="pp-textarea"
+                rows={isMobile ? 4 : 5}
+              />
+              <button
+                type="submit"
+                disabled={!commentText.trim()}
+                className={`pp-submit-btn ${commentText.trim() ? 'pp-submit-active' : ''}`}
+              >
+                <span className="pp-submit-glow" />
+                <span className="pp-submit-text">💬 Post Comment</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {/* Footer strip */}
+        <div className="pp-footer">
+          <span className="pp-footer-text">Brandscapers Africa · Shaping the Narrative</span>
         </div>
       </div>
     </div>
   );
 }
+
+const ppStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --pp-navy: #04101f;
+    --pp-navy-dark: #0a1929;
+    --pp-navy-mid: #0d2347;
+    --pp-blue-deep: #1338be;
+    --pp-blue-mid: #1a5fdb;
+    --pp-blue-vivid: #2979ff;
+    --pp-blue-light: #5c9fff;
+    --pp-blue-pale: #90c9ff;
+    --pp-glass: rgba(255,255,255,0.10);
+    --pp-glass-border: rgba(255,255,255,0.18);
+    --pp-white: #ffffff;
+    --pp-text: rgba(255,255,255,0.92);
+    --pp-text-muted: rgba(180,215,255,0.75);
+    --pp-font-display: 'Cormorant Garamond', Georgia, serif;
+    --pp-font-body: 'Outfit', system-ui, sans-serif;
+    --pp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --pp-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ROOT */
+  .pp-root {
+    min-height: 100vh;
+    font-family: var(--pp-font-body);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* PROGRESS BAR */
+  .pp-progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--pp-blue-deep), var(--pp-blue-vivid), var(--pp-blue-pale));
+    z-index: 9999;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 10px rgba(41,121,255,0.6);
+  }
+
+  /* BACKGROUNDS */
+  .pp-bg-base {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(
+      160deg,
+      var(--pp-navy) 0%,
+      var(--pp-navy-dark) 18%,
+      var(--pp-navy-mid) 38%,
+      #0f3264 55%,
+      #1a5fdb 75%,
+      #3a7fd4 88%,
+      #6fb3e8 100%
+    );
+  }
+
+  .pp-bg-noise {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px;
+  }
+
+  .pp-bg-orb {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    filter: blur(100px);
+    animation: pp-orb-float 20s ease-in-out infinite alternate;
+  }
+  .pp-orb-1 { width: 600px; height: 600px; top: -150px; right: -100px; background: radial-gradient(circle, rgba(41,121,255,0.2), transparent 70%); }
+  .pp-orb-2 { width: 450px; height: 450px; bottom: -100px; left: -100px; background: radial-gradient(circle, rgba(10,22,40,0.5), transparent 70%); animation-delay: -7s; }
+  .pp-orb-3 { width: 350px; height: 350px; top: 40%; left: 25%; background: radial-gradient(circle, rgba(92,159,255,0.12), transparent 70%); animation-delay: -14s; }
+
+  @keyframes pp-orb-float {
+    0% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(30px,-25px) scale(1.08); }
+    100% { transform: translate(-20px,30px) scale(0.93); }
+  }
+
+  .pp-bg-lines {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.035;
+    background-image:
+      linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  /* LOADING */
+  .pp-loading {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 2rem;
+  }
+  .pp-loading-ring { display: inline-block; position: relative; width: 64px; height: 64px; }
+  .pp-loading-ring div {
+    box-sizing: border-box; display: block; position: absolute;
+    width: 52px; height: 52px; margin: 6px;
+    border: 3px solid transparent; border-radius: 50%;
+    animation: pp-ring-spin 1.3s cubic-bezier(0.5,0,0.5,1) infinite;
+  }
+  .pp-loading-ring div:nth-child(1) { border-top-color: var(--pp-blue-vivid); animation-delay: -0.45s; }
+  .pp-loading-ring div:nth-child(2) { border-top-color: var(--pp-blue-light); animation-delay: -0.3s; }
+  .pp-loading-ring div:nth-child(3) { border-top-color: var(--pp-blue-pale); animation-delay: -0.15s; }
+  .pp-loading-ring div:nth-child(4) { border-top-color: rgba(255,255,255,0.2); }
+
+  @keyframes pp-ring-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .pp-loading-text { color: var(--pp-blue-pale); font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; }
+
+  /* OUTER LAYOUT */
+  .pp-outer {
+    position: relative; z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1rem, 4vw, 2rem) 0;
+    display: flex; flex-direction: column; gap: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  /* ARTICLE CARD */
+  .pp-article-card {
+    position: relative;
+    background: linear-gradient(145deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%);
+    backdrop-filter: blur(60px) saturate(180%);
+    -webkit-backdrop-filter: blur(60px) saturate(180%);
+    border-radius: clamp(20px, 4vw, 36px);
+    border: 1px solid var(--pp-glass-border);
+    overflow: hidden;
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+
+  .pp-article-top-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pp-blue-deep), var(--pp-blue-vivid), var(--pp-blue-light), var(--pp-blue-vivid), var(--pp-blue-deep), transparent);
+    animation: pp-shimmer 4s ease-in-out infinite;
+  }
+
+  @keyframes pp-shimmer { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+  .pp-article-header { padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 5vw, 3.5rem) clamp(1.5rem, 3vw, 2.5rem); }
+
+  .pp-article-eyebrow {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--pp-blue-pale); opacity: 0.8;
+    margin-bottom: 1.25rem;
+  }
+
+  .pp-eyebrow-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--pp-blue-vivid);
+    animation: pp-dot-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pp-dot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .pp-title {
+    font-family: var(--pp-font-display);
+    font-size: clamp(1.9rem, 5.5vw, 3.5rem);
+    font-weight: 700;
+    font-style: italic;
+    color: var(--pp-white);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    word-break: break-word;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .pp-meta-row {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .pp-meta-item {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.8rem; font-weight: 500;
+    color: var(--pp-text-muted);
+  }
+  .pp-meta-icon { font-size: 0.85rem; }
+
+  /* Cover image */
+  .pp-cover-wrap {
+    position: relative; overflow: hidden;
+    margin: 0 clamp(1.5rem, 5vw, 3.5rem);
+    border-radius: clamp(12px, 2vw, 20px);
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .pp-cover-img { width: 100%; height: auto; display: block; border-radius: inherit; }
+  .pp-cover-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, rgba(4,16,31,0.4));
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Article content */
+  .pp-content {
+    padding: 0 clamp(1.5rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 2.5rem);
+    color: rgba(230,242,255,0.92);
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    line-height: 1.85;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .pp-content h1, .pp-content h2, .pp-content h3, .pp-content h4 {
+    font-family: var(--pp-font-display);
+    color: var(--pp-white);
+    margin: 2rem 0 1rem;
+    line-height: 1.2;
+    font-style: italic;
+  }
+  .pp-content h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+  .pp-content h2 { font-size: clamp(1.5rem, 3.5vw, 2.2rem); }
+  .pp-content h3 { font-size: clamp(1.2rem, 3vw, 1.7rem); }
+  .pp-content p { margin-bottom: 1.25rem; }
+  .pp-content a { color: var(--pp-blue-pale); text-decoration: underline; text-underline-offset: 3px; }
+  .pp-content img { max-width: 100%; border-radius: clamp(8px, 2vw, 16px); margin: 1.5rem 0; box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+  .pp-content blockquote {
+    border-left: 3px solid var(--pp-blue-vivid);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    background: rgba(41,121,255,0.08);
+    border-radius: 0 12px 12px 0;
+    font-style: italic; color: var(--pp-text-muted);
+  }
+  .pp-content code {
+    background: rgba(41,121,255,0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: var(--pp-blue-pale);
+  }
+  .pp-content ul, .pp-content ol { padding-left: 1.75rem; margin-bottom: 1.25rem; }
+  .pp-content li { margin-bottom: 0.5rem; }
+
+  /* Tags */
+  .pp-tags-row {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .pp-tag {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--pp-blue-pale);
+    background: rgba(41,121,255,0.15);
+    border: 1px solid rgba(41,121,255,0.25);
+    border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+    transition: all 0.25s;
+  }
+  .pp-tag:hover { background: rgba(41,121,255,0.3); border-color: rgba(41,121,255,0.5); }
+
+  /* Section divider */
+  .pp-section-divider {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0 clamp(1.5rem, 5vw, 3.5rem);
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .pp-divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
+  .pp-divider-diamond { color: rgba(144,201,255,0.4); font-size: 0.75rem; }
+
+  /* Like button */
+  .pp-like-wrap {
+    display: flex; justify-content: center;
+    padding: 0 clamp(1.5rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .pp-like-btn {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: clamp(0.9rem, 2vw, 1.1rem) clamp(2rem, 4vw, 3rem);
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    color: var(--pp-white);
+    font-family: var(--pp-font-body);
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.35s var(--pp-ease);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+
+  .pp-like-btn:hover {
+    transform: translateY(-4px) scale(1.04);
+    border-color: rgba(255,107,157,0.5);
+    box-shadow: 0 20px 50px rgba(255,107,157,0.25);
+  }
+
+  .pp-like-btn-active {
+    background: linear-gradient(135deg, #ff6b9d, #ff2e63);
+    border-color: rgba(255,107,157,0.6);
+    box-shadow: 0 15px 40px rgba(255,107,157,0.35);
+  }
+
+  .pp-like-icon { font-size: 1.3rem; transition: transform 0.3s var(--pp-ease-spring); }
+  .pp-like-btn:hover .pp-like-icon { transform: scale(1.3); }
+  .pp-like-text { font-weight: 600; }
+  .pp-like-count {
+    background: rgba(255,255,255,0.2);
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  .pp-like-glow {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .pp-like-btn:hover .pp-like-glow { transform: translateX(100%); }
+
+  /* SHARE SECTION */
+  .pp-share-section {
+    padding: 0 clamp(1.5rem, 5vw, 3.5rem) clamp(2rem, 5vw, 3rem);
+  }
+
+  .pp-share-heading {
+    display: flex; align-items: center; gap: 1.25rem;
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .pp-share-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
+  .pp-share-title {
+    font-family: var(--pp-font-display);
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    font-weight: 600; font-style: italic;
+    color: var(--pp-text-muted);
+    white-space: nowrap;
+  }
+
+  /* Mobile share grid */
+  .pp-share-mobile-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+  }
+
+  .pp-share-mobile-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.35rem;
+    padding: 0.9rem 0.5rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--platform-color) 40%, transparent);
+    background: color-mix(in srgb, var(--platform-color) 15%, rgba(255,255,255,0.05));
+    color: var(--pp-white);
+    cursor: pointer;
+    transition: all 0.25s var(--pp-ease);
+    font-family: var(--pp-font-body);
+  }
+
+  .pp-share-mobile-btn:hover {
+    transform: translateY(-3px);
+    background: color-mix(in srgb, var(--platform-color) 30%, rgba(255,255,255,0.1));
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--platform-color) 40%, transparent);
+  }
+
+  .pp-share-mobile-icon { font-size: 1.4rem; }
+  .pp-share-mobile-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.85; }
+
+  /* Galaxy share (desktop) */
+  .pp-share-galaxy {
+    position: relative;
+    height: 320px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .pp-galaxy-core {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  }
+  .pp-galaxy-icon {
+    font-size: 2rem; color: var(--pp-blue-pale);
+    animation: pp-core-pulse 3s ease-in-out infinite;
+  }
+  @keyframes pp-core-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+  .pp-galaxy-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+
+  .pp-galaxy-ring {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba(41,121,255,0.15);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .pp-ring-1 { width: 220px; height: 220px; animation: pp-ring-spin-slow 20s linear infinite; }
+  .pp-ring-2 { width: 300px; height: 300px; border-style: dashed; animation: pp-ring-spin-slow 30s linear infinite reverse; }
+
+  @keyframes pp-ring-spin-slow { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  .pp-galaxy-btn {
+    position: absolute;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in srgb, var(--platform-color) 60%, transparent);
+    background: color-mix(in srgb, var(--platform-color) 20%, rgba(255,255,255,0.05));
+    color: var(--pp-white);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 700;
+    font-family: var(--pp-font-body);
+    transition: all 0.3s var(--pp-ease);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .pp-galaxy-btn-hov {
+    width: 60px; height: 60px;
+    background: color-mix(in srgb, var(--platform-color) 50%, rgba(20,30,60,0.5));
+    border-color: var(--platform-color);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--platform-color) 60%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);
+    z-index: 20;
+  }
+
+  .pp-galaxy-btn-icon { position: relative; z-index: 1; }
+
+  .pp-galaxy-btn-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,25,41,0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--pp-white);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    pointer-events: none;
+    animation: pp-tooltip-in 0.2s ease;
+  }
+
+  @keyframes pp-tooltip-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* COMMENTS CARD */
+  .pp-comments-card {
+    position: relative;
+    background: linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.05) 100%);
+    backdrop-filter: blur(50px) saturate(180%);
+    -webkit-backdrop-filter: blur(50px) saturate(180%);
+    border-radius: clamp(20px, 4vw, 32px);
+    border: 1px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+
+  .pp-comments-top-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(41,121,255,0.6), rgba(92,159,255,0.8), rgba(41,121,255,0.6), transparent);
+  }
+
+  .pp-comments-header {
+    padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem) 1rem;
+  }
+
+  .pp-comments-eyebrow {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--pp-blue-pale); opacity: 0.7;
+    margin-bottom: 0.5rem;
+  }
+
+  .pp-comments-title {
+    font-family: var(--pp-font-display);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700; font-style: italic;
+    color: var(--pp-white);
+    display: flex; align-items: center; gap: 1rem;
+  }
+
+  .pp-comments-count {
+    font-family: var(--pp-font-body);
+    font-style: normal;
+    font-size: 0.85rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--pp-blue-deep), var(--pp-blue-vivid));
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    letter-spacing: 0;
+  }
+
+  /* No comments */
+  .pp-no-comments {
+    text-align: center;
+    padding: clamp(2rem, 5vw, 3.5rem);
+  }
+  .pp-no-comments-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
+  .pp-no-comments-text { color: var(--pp-text-muted); font-size: 0.95rem; font-style: italic; }
+
+  /* Comments list */
+  .pp-comments-list {
+    padding: 0 clamp(1.5rem, 4vw, 2.5rem);
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  /* Comment card */
+  .pp-comment-card {
+    position: relative;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: clamp(14px, 2vw, 20px);
+    padding: clamp(1.1rem, 3vw, 1.75rem);
+    transition: all 0.3s var(--pp-ease);
+    overflow: hidden;
+  }
+
+  .pp-comment-hov {
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(41,121,255,0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2), 0 0 0 1px rgba(41,121,255,0.15);
+  }
+
+  .pp-comment-top-accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 0;
+    background: linear-gradient(90deg, var(--pp-blue-deep), var(--pp-blue-vivid));
+    transition: height 0.3s ease;
+  }
+  .pp-comment-hov .pp-comment-top-accent { height: 2px; }
+
+  .pp-comment-head {
+    display: flex; align-items: center; gap: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .pp-comment-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--pp-blue-deep), var(--pp-blue-vivid));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.9rem; color: var(--pp-white);
+    border: 1.5px solid rgba(41,121,255,0.3);
+    box-shadow: 0 4px 12px rgba(41,121,255,0.25);
+  }
+
+  .pp-comment-meta { display: flex; flex-direction: column; gap: 0.15rem; }
+  .pp-comment-author { font-size: 0.9rem; font-weight: 700; color: var(--pp-white); }
+  .pp-comment-date { font-size: 0.72rem; color: var(--pp-text-muted); }
+
+  .pp-comment-text {
+    color: rgba(220,238,255,0.85);
+    font-size: clamp(0.88rem, 1.8vw, 0.97rem);
+    line-height: 1.7;
+    word-break: break-word;
+    margin-bottom: 1rem;
+  }
+
+  /* Reactions */
+  .pp-reactions-row {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .pp-reaction-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(10px);
+    color: var(--pp-white);
+    font-family: var(--pp-font-body);
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s var(--pp-ease);
+    white-space: nowrap;
+  }
+
+  .pp-reaction-btn:hover {
+    background: rgba(41,121,255,0.2);
+    border-color: rgba(41,121,255,0.35);
+    transform: translateY(-2px);
+  }
+
+  .pp-reaction-active {
+    background: rgba(41,121,255,0.25);
+    border-color: rgba(41,121,255,0.5);
+    box-shadow: 0 4px 15px rgba(41,121,255,0.2);
+  }
+
+  .pp-reaction-count {
+    background: rgba(255,255,255,0.15);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.72em;
+    font-weight: 800;
+  }
+
+  /* Comment form */
+  .pp-comment-form-wrap {
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: 1.5rem;
+  }
+
+  .pp-form-heading {
+    font-family: var(--pp-font-display);
+    font-size: 1.1rem; font-weight: 600; font-style: italic;
+    color: var(--pp-text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .pp-comment-form { display: flex; flex-direction: column; gap: 1rem; }
+
+  .pp-textarea {
+    width: 100%;
+    padding: clamp(1rem, 2.5vw, 1.4rem);
+    border-radius: clamp(12px, 2vw, 18px);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    color: var(--pp-white);
+    font-family: var(--pp-font-body);
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.25s var(--pp-ease);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+    min-height: 100px;
+  }
+
+  .pp-textarea::placeholder { color: rgba(144,201,255,0.4); }
+  .pp-textarea:focus {
+    outline: none;
+    border-color: rgba(41,121,255,0.5);
+    background: rgba(255,255,255,0.10);
+    box-shadow: 0 0 0 3px rgba(41,121,255,0.12), 0 4px 20px rgba(0,0,0,0.2);
+  }
+
+  .pp-submit-btn {
+    position: relative; overflow: hidden;
+    padding: clamp(0.85rem, 2.5vw, 1.1rem) 2rem;
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+    font-family: var(--pp-font-body);
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    font-weight: 700;
+    cursor: not-allowed;
+    transition: all 0.3s var(--pp-ease);
+    width: 100%;
+  }
+
+  .pp-submit-active {
+    background: linear-gradient(135deg, var(--pp-navy-mid), var(--pp-blue-deep), var(--pp-blue-mid));
+    border-color: rgba(41,121,255,0.4);
+    color: var(--pp-white);
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(10,22,40,0.4);
+  }
+
+  .pp-submit-active:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(10,22,40,0.5);
+  }
+
+  .pp-submit-glow {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .pp-submit-active:hover .pp-submit-glow { transform: translateX(100%); }
+  .pp-submit-text { position: relative; z-index: 1; }
+
+  /* HEART ANIMATION CANVAS */
+  .pp-heart-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9999;
+  }
+
+  .pp-shockwave {
+    position: absolute; top: 50%; left: 50%;
+    width: 200px; height: 200px;
+    border-style: solid;
+    border-radius: 50%;
+    animation: pp-shockwave 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes pp-shockwave {
+    0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+    20%  { transform: translate(-50%,-50%) scale(1.2); opacity: 1; }
+    50%  { opacity: 0.7; }
+    100% { transform: translate(-50%,-50%) scale(6); opacity: 0; }
+  }
+
+  .pp-energy-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 180px; height: 180px;
+    border: 3px dashed rgba(255,107,157,0.6);
+    border-radius: 50%;
+    animation: pp-energy 2s ease-out forwards;
+  }
+
+  @keyframes pp-energy {
+    0% { transform: translate(-50%,-50%) scale(0.3) rotate(0deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-50%,-50%) scale(3.5) rotate(180deg); opacity: 0; }
+  }
+
+  /* CSS Heart Shape */
+  .pp-heart-shape {
+    position: relative;
+    width: 100%; height: 100%;
+    background: #ff1744;
+    transform: rotate(-45deg);
+    border-radius: 0;
+  }
+  .pp-heart-shape::before,
+  .pp-heart-shape::after {
+    content: ''; position: absolute;
+    width: 100%; height: 100%;
+    background: inherit;
+    border-radius: 50%;
+  }
+  .pp-heart-shape::before { top: -50%; left: 0; }
+  .pp-heart-shape::after { top: 0; left: 50%; }
+
+  /* Screen flash on like */
+  .pp-screen-flash {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,50,100,0.25), transparent 70%);
+    animation: pp-flash 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes pp-flash {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Rainbow heart - main center piece */
+  .pp-main-heart {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pp-quantum 3.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    will-change: transform, opacity;
+    z-index: 10;
+  }
+
+  .pp-rainbow-heart {
+    animation: pp-rainbow-color 0.4s linear infinite, pp-heart-throb 0.3s ease-in-out infinite alternate !important;
+    box-shadow:
+      0 0 40px currentColor,
+      0 0 80px currentColor,
+      0 0 120px rgba(255,100,150,0.6);
+  }
+  .pp-rainbow-heart::before, .pp-rainbow-heart::after {
+    background: inherit;
+  }
+
+  @keyframes pp-rainbow-color {
+    0%   { background: #ff0055; }
+    20%  { background: #ff6600; }
+    40%  { background: #ffdd00; }
+    60%  { background: #00ff99; }
+    80%  { background: #6644ff; }
+    100% { background: #ff0055; }
+  }
+
+  @keyframes pp-heart-throb {
+    0%   { transform: rotate(-45deg) scale(1); }
+    100% { transform: rotate(-45deg) scale(1.12); }
+  }
+
+  @keyframes pp-quantum {
+    0%   { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity: 0; }
+    8%   { transform: translate(-50%,-50%) scale(1.4) rotate(-20deg); opacity: 1; }
+    15%  { transform: translate(-50%,-50%) scale(2.8) rotate(15deg); opacity: 1; }
+    30%  { transform: translate(-50%,-50%) scale(2.5) rotate(-10deg); opacity: 1; }
+    50%  { transform: translate(-50%,-50%) scale(2.7) rotate(8deg); opacity: 0.95; }
+    70%  { transform: translate(-50%,-50%) scale(2.3) rotate(-5deg); opacity: 0.8; }
+    90%  { transform: translate(-50%,-50%) scale(1.5) rotate(3deg); opacity: 0.4; }
+    100% { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity: 0; }
+  }
+
+  /* Rainbow expanding rings */
+  .pp-rainbow-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 160px; height: 160px;
+    border: 3px solid;
+    border-radius: 50%;
+    animation: pp-rainbow-expand 1.8s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+  }
+  @keyframes pp-rainbow-expand {
+    0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+    60%  { opacity: 0.8; }
+    100% { transform: translate(-50%,-50%) scale(5); opacity: 0; }
+  }
+
+  /* Satellite hearts orbiting outward */
+  .pp-satellite-heart {
+    position: absolute; top: 50%; left: 50%;
+    transform-origin: 0 0;
+    animation: pp-satellite-launch 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    --sat-angle: 0deg;
+  }
+  @keyframes pp-satellite-launch {
+    0%   { transform: translate(-50%,-50%) rotate(var(--sat-angle)) translateX(0px) scale(0); opacity: 0; }
+    15%  { opacity: 1; transform: translate(-50%,-50%) rotate(var(--sat-angle)) translateX(20px) scale(1.4); }
+    60%  { opacity: 1; transform: translate(-50%,-50%) rotate(var(--sat-angle)) translateX(180px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--sat-angle)) translateX(280px) scale(0.2); }
+  }
+
+  .pp-spiral-heart {
+    position: absolute; top: 50%; left: 50%;
+    animation: pp-spiral 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    will-change: transform, opacity;
+  }
+
+  @keyframes pp-spiral {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(0) rotate(0deg); }
+    20% { opacity: 1; transform: translate(-50%,-50%) scale(1.3) rotate(var(--start-rotation)); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.1) rotate(calc(var(--start-rotation) + 720deg)); }
+  }
+
+  .pp-orbital-heart {
+    position: absolute;
+    animation: pp-orbital 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    will-change: transform, opacity;
+  }
+
+  @keyframes pp-orbital {
+    0% { transform: rotate(var(--start-angle)) translateX(var(--radius)) rotate(calc(-1 * var(--start-angle))) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: rotate(calc(var(--start-angle) + 360deg * var(--speed))) translateX(var(--radius)) rotate(calc(-1 * (var(--start-angle) + 360deg * var(--speed)))) scale(0.3); opacity: 0; }
+  }
+
+  .pp-particle {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%;
+    animation: pp-explode 1.5s ease-out forwards;
+    will-change: transform, opacity;
+  }
+
+  @keyframes pp-explode {
+    0% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0); }
+  }
+
+  .pp-center-glow {
+    position: absolute; top: 50%; left: 50%;
+    width: 400px; height: 400px;
+    background: conic-gradient(
+      rgba(255,0,85,0.5),
+      rgba(255,102,0,0.5),
+      rgba(255,221,0,0.5),
+      rgba(0,255,153,0.5),
+      rgba(102,68,255,0.5),
+      rgba(255,0,85,0.5)
+    );
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    animation: pp-glow-spin 3s ease-out forwards;
+    filter: blur(40px);
+  }
+  @keyframes pp-glow-spin {
+    0%   { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity: 0.9; }
+    40%  { transform: translate(-50%,-50%) scale(1.5) rotate(180deg); opacity: 0.7; }
+    100% { transform: translate(-50%,-50%) scale(3) rotate(360deg); opacity: 0; }
+  }
+
+  /* Reaction pop */
+  .pp-reaction-pop {
+    position: fixed; top: 50%; left: 50%;
+    animation: pp-reaction-pop 1s ease-out forwards;
+    pointer-events: none; z-index: 9999;
+    filter: drop-shadow(0 0 20px rgba(255,255,255,0.8));
+    transform: translate(-50%,-50%);
+  }
+
+  @keyframes pp-reaction-pop {
+    0% { transform: translate(-50%,-50%) scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: translate(-50%,-50%) scale(1.5) rotate(15deg); opacity: 1; }
+    100% { transform: translate(-50%, calc(-50% - 60px)) scale(0.3); opacity: 0; }
+  }
+
+  /* Share toast */
+  .pp-share-toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(100,30,160,0.95), rgba(70,20,120,0.95));
+    backdrop-filter: blur(20px);
+    color: var(--pp-white);
+    padding: 0.85rem 1.75rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    z-index: 10000;
+    font-size: 0.9rem; font-weight: 700;
+    animation: pp-toast-in 0.3s var(--pp-ease-spring);
+    white-space: nowrap;
+  }
+
+  @keyframes pp-toast-in {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+
+  /* Footer */
+  .pp-footer {
+    text-align: center;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 0 0 24px 24px;
+  }
+  .pp-footer-text { font-size: 0.62rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .pp-outer { padding: 1rem 1rem 0; gap: 1.25rem; }
+    .pp-article-header { padding: 1.75rem 1.25rem 1.25rem; }
+    .pp-content { padding: 0 1.25rem 1.5rem; }
+    .pp-tags-row, .pp-section-divider, .pp-like-wrap, .pp-share-section { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .pp-cover-wrap { margin: 0 1.25rem; margin-bottom: 1.5rem; }
+    .pp-comments-header { padding: 1.5rem 1.25rem 0.75rem; }
+    .pp-comments-list { padding: 0 1.25rem; }
+    .pp-comment-form-wrap { padding: 1.25rem; }
+    .pp-share-galaxy { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .pp-share-mobile-grid { grid-template-columns: repeat(3, 1fr); }
+    .pp-reactions-row { gap: 0.35rem; }
+    .pp-reaction-btn { padding: 0.35rem 0.65rem; font-size: 0.72rem; }
+    .pp-meta-row { gap: 0.6rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+`;

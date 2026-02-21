@@ -19,6 +19,8 @@ export default function AdminDashboard() {
   const [lineSpacing, setLineSpacing] = useState('normal');
   const [fontFamily, setFontFamily] = useState('Arial');
   const [fontStyle, setFontStyle] = useState('normal');
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredStat, setHoveredStat] = useState(null);
   const contentRef = useRef(null);
   const navigate = useNavigate();
 
@@ -235,614 +237,878 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="admin-container">
-      <div className="container py-5">
-        {/* Animated Header */}
-        <div className="dashboard-header">
-          <div className="header-content">
-            <h1 className="dashboard-title">
-              <span className="title-icon">⚡</span>
-              Admin Command Center
+    <div className="admin-root">
+      {/* Layered animated background - matching home page */}
+      <div className="bg-base" />
+      <div className="bg-noise" />
+      <div className="bg-orb bg-orb-1" />
+      <div className="bg-orb bg-orb-2" />
+      <div className="bg-orb bg-orb-3" />
+      <div className="bg-orb bg-orb-4" />
+      <div className="bg-lines" />
+
+      <div className="admin-container">
+        {/* Animated Header with Glass Effect */}
+        <div className="hero-section">
+          <div className="hero-glass">
+            <div className="hero-top-line" />
+            
+            <div className="hero-badge-row">
+              <span className="hero-badge">✦ ADMIN PORTAL ✦ EXECUTIVE ACCESS</span>
+            </div>
+
+            <h1 className="hero-title">
+              <span className="hero-title-top">Command Center</span>
+              <span className="hero-title-bottom">Content Management Suite</span>
             </h1>
-            <p className="dashboard-subtitle">Manage your content with power and precision</p>
-          </div>
-          <div className="stats-bar">
-            <div className="stat-item">
-              <div className="stat-value">{posts.length}</div>
-              <div className="stat-label">Total Posts</div>
+
+            <p className="hero-subtitle">
+              Forge the narrative. Shape perspectives. Control the conversation — 
+              with enterprise-grade content management.
+            </p>
+
+            <div className="hero-divider">
+              <span className="hero-divider-dot" />
+              <span className="hero-divider-line" />
+              <span className="hero-divider-diamond">◇</span>
+              <span className="hero-divider-line" />
+              <span className="hero-divider-dot" />
             </div>
-            <div className="stat-item">
-              <div className="stat-value">{posts.filter(p => p.published).length}</div>
-              <div className="stat-label">Published</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">{posts.filter(p => !p.published).length}</div>
-              <div className="stat-label">Drafts</div>
+
+            {/* Stats Row with hover effects */}
+            <div className="stats-row">
+              {[
+                { value: posts.length, label: 'Total Posts', icon: '◈' },
+                { value: posts.filter(p => p.published).length, label: 'Published', icon: '◉' },
+                { value: posts.filter(p => !p.published).length, label: 'Drafts', icon: '✦' },
+              ].map((s, i) => (
+                <div
+                  key={i}
+                  className={`stat-card ${hoveredStat === i ? 'stat-hovered' : ''}`}
+                  onMouseEnter={() => setHoveredStat(i)}
+                  onMouseLeave={() => setHoveredStat(null)}
+                >
+                  <div className="stat-icon">{s.icon}</div>
+                  <div className="stat-number">{s.value}</div>
+                  <div className="stat-label">{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="main-card">
+        {/* Tab Navigation - Glass Card Style */}
+        <div className="main-glass-card">
           <div className="tab-navigation">
             <button 
               className={`tab-button ${activeTab === 'create' ? 'active' : ''}`}
               onClick={() => setActiveTab('create')}
             >
-              <span className="tab-icon">✨</span>
-              Create New Post
+              <span className="tab-icon">✦</span>
+              <span className="tab-text">Create</span>
+              {activeTab === 'create' && <span className="tab-glow" />}
             </button>
             <button 
               className={`tab-button ${activeTab === 'manage' ? 'active' : ''}`}
               onClick={() => setActiveTab('manage')}
             >
-              <span className="tab-icon">📊</span>
-              Manage Posts
+              <span className="tab-icon">◈</span>
+              <span className="tab-text">Manage</span>
               <span className="tab-badge">{posts.length}</span>
+              {activeTab === 'manage' && <span className="tab-glow" />}
             </button>
             <button 
               className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`}
               onClick={() => setActiveTab('preview')}
               disabled={!previewPost}
             >
-              <span className="tab-icon">👁️</span>
-              Preview Post
+              <span className="tab-icon">◉</span>
+              <span className="tab-text">Preview</span>
+              {activeTab === 'preview' && <span className="tab-glow" />}
             </button>
           </div>
 
-          {/* Create Post Tab */}
-          {activeTab === 'create' && (
-            <div className="tab-content">
-              <div className="section-header">
-                <h2 className="section-title">Create New Blog Post</h2>
-                <p className="section-description">Craft engaging content that resonates with your audience</p>
-              </div>
-
-              <form onSubmit={submit} className="form-container">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span className="label-icon"></span>
-                      Title
-                    </label>
-                    <input 
-                      className="form-input"
-                      placeholder="Enter an engaging title..." 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span className="label-icon"></span>
-                      Slug
-                    </label>
-                    <input 
-                      className="form-input"
-                      placeholder="unique-post-slug" 
-                      value={slug} 
-                      onChange={(e) => setSlug(e.target.value)} 
-                    />
-                  </div>
+          {/* Tab Content with Glass Effect */}
+          <div className="tab-content-wrapper">
+            {/* Create Post Tab */}
+            {activeTab === 'create' && (
+              <div className="tab-content create-tab">
+                <div className="section-header">
+                  <div className="section-header-glow" />
+                  <h2 className="section-title">
+                    <span className="title-accent">✦</span>
+                    Craft New Narrative
+                  </h2>
+                  <p className="section-description">Compose your next masterpiece with precision tools</p>
                 </div>
-                
-                <div className="form-group">
-                  <div className="editor-header">
-                    <label className="form-label">
-                      <span className="label-icon">✍️</span>
-                      Content
-                    </label>
-                    <button
-                      type="button"
-                      className={`preview-toggle ${isPreviewMode ? 'active' : ''}`}
-                      onClick={togglePreview}
-                    >
-                      {isPreviewMode ? '✏️ Edit Mode' : ' Preview Mode'}
-                    </button>
-                  </div>
 
-                  {!isPreviewMode && (
-                    <div className="toolbar">
-                      <div className="toolbar-group">
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('bold')} title="Bold">
-                          <strong>B</strong>
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('italic')} title="Italic">
-                          <em>I</em>
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('underline')} title="Underline">
-                          <u>U</u>
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('strikeThrough')} title="Strikethrough">
-                          <s>S</s>
-                        </button>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <select
-                          className="toolbar-select"
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            formatText('formatBlock', value === 'p' ? '<p>' : `<${value}>`);
-                          }}
-                          title="Heading"
-                        >
-                          <option value="p">Paragraph</option>
-                          <option value="h1">Heading 1</option>
-                          <option value="h2">Heading 2</option>
-                          <option value="h3">Heading 3</option>
-                          <option value="h4">Heading 4</option>
-                        </select>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('insertUnorderedList')} title="Bullet List">
-                          • List
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('insertOrderedList')} title="Numbered List">
-                          1. List
-                        </button>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('justifyLeft')} title="Align Left">
-                          ⬅️
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('justifyCenter')} title="Align Center">
-                          ↔️
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('justifyRight')} title="Align Right">
-                          ➡️
-                        </button>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <button
-                          type="button"
-                          className="toolbar-btn"
-                          onClick={() => {
-                            const url = prompt('Enter URL:');
-                            if (url) formatText('createLink', url);
-                          }}
-                          title="Insert Link"
-                        >
-                          🔗
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('unlink')} title="Remove Link">
-                          🔗❌
-                        </button>
-                        <button
-                          type="button"
-                          className="toolbar-btn"
-                          onClick={() => {
-                            const selection = window.getSelection();
-                            if (selection.toString()) {
-                              insertHTML('<code>' + selection.toString() + '</code>');
-                            } else {
-                              insertHTML('<code>code</code>');
-                            }
-                          }}
-                          title="Insert Code"
-                        >
-                          {'</>'}
-                        </button>
-                        <button type="button" className="toolbar-btn" onClick={() => formatText('formatBlock', 'blockquote')} title="Blockquote">
-                          ❝
-                        </button>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      {/* New Font Controls */}
-                      <div className="toolbar-group">
-                        <input
-                          type="color"
-                          value={fontColor}
-                          onChange={handleFontColorChange}
-                          className="color-picker"
-                          title="Font Color"
+                <form onSubmit={submit} className="form-container">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">
+                        <span className="label-icon">◈</span>
+                        Title
+                      </label>
+                      <div className="input-wrapper">
+                        <input 
+                          className="form-input"
+                          placeholder="Enter an engaging title..." 
+                          value={title} 
+                          onChange={(e) => setTitle(e.target.value)} 
                         />
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <select
-                          className="toolbar-select"
-                          value={fontFamily}
-                          onChange={handleFontFamilyChange}
-                          title="Font Family"
-                        >
-                          <option value="Arial">Arial</option>
-                          <option value="Helvetica">Helvetica</option>
-                          <option value="Times New Roman">Times New Roman</option>
-                          <option value="Georgia">Georgia</option>
-                          <option value="Courier New">Courier New</option>
-                          <option value="Verdana">Verdana</option>
-                          <option value="Tahoma">Tahoma</option>
-                          <option value="Trebuchet MS">Trebuchet MS</option>
-                          <option value="Impact">Impact</option>
-                          <option value="Comic Sans MS">Comic Sans MS</option>
-                          <option value="Arial Black">Arial Black</option>
-                          <option value="Palatino">Palatino</option>
-                          <option value="Garamond">Garamond</option>
-                          <option value="Bookman">Bookman</option>
-                          <option value="Avant Garde">Avant Garde</option>
-                        </select>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <select
-                          className="toolbar-select"
-                          value={fontStyle}
-                          onChange={handleFontStyleChange}
-                          title="Font Style"
-                        >
-                          <option value="normal">Normal</option>
-                          <option value="bold">Bold</option>
-                          <option value="italic">Italic</option>
-                          <option value="underline">Underline</option>
-                          <option value="strikethrough">Strikethrough</option>
-                        </select>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <select
-                          className="toolbar-select"
-                          value={lineSpacing}
-                          onChange={handleLineSpacingChange}
-                          title="Line Spacing"
-                        >
-                          <option value="normal">Normal</option>
-                          <option value="single">Single</option>
-                          <option value="1.5">1.5</option>
-                          <option value="double">Double</option>
-                        </select>
-                      </div>
-
-                      <div className="toolbar-divider"></div>
-
-                      <div className="toolbar-group">
-                        <button type="button" className="toolbar-btn danger" onClick={() => formatText('removeFormat')} title="Clear Formatting">
-                          🧹 Clear
-                        </button>
+                        <div className="input-focus-ring" />
                       </div>
                     </div>
-                  )}
-
-                  {!isPreviewMode ? (
-                    <div
-                      ref={contentRef}
-                      contentEditable
-                      className="content-editor"
-                      onInput={handleContentInput}
-                      data-placeholder="Start crafting your masterpiece..."
-                      suppressContentEditableWarning={true}
-                    />
-                  ) : (
-                    <div
-                      className="content-preview"
-                      dangerouslySetInnerHTML={{ __html: content }}
-                    />
-                  )}
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span className="label-icon">🏷️</span>
-                      Tags
-                    </label>
-                    <input 
-                      className="form-input"
-                      placeholder="technology, business, design" 
-                      value={tags} 
-                      onChange={(e) => setTags(e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span className="label-icon">🖼️</span>
-                      Cover Image
-                    </label>
-                    <input 
-                      type="file" 
-                      multiple 
-                      onChange={handleFiles}
-                      className="form-input file-input"
-                    />
-                  </div>
-                </div>
-                
-                <div className="publish-toggle">
-                  <input 
-                    type="checkbox" 
-                    checked={published} 
-                    onChange={(e) => setPublished(e.target.checked)} 
-                    id="pub"
-                    className="toggle-input"
-                  />
-                  <label htmlFor="pub" className="toggle-label">
-                    <span className="toggle-switch"></span>
-                    <span className="toggle-text">Publish immediately</span>
-                  </label>
-                </div>
-                
-                <button className="submit-button" type="submit">
-                  <span className="button-icon"></span>
-                  Create Post
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* Manage Posts Tab */}
-          {activeTab === 'manage' && (
-            <div className="tab-content">
-              <div className="section-header">
-                <h2 className="section-title">Manage Your Posts</h2>
-                <div className="post-stats">
-                  <span className="stat-chip published">{posts.filter(p => p.published).length} published</span>
-                  <span className="stat-chip draft">{posts.filter(p => !p.published).length} drafts</span>
-                </div>
-              </div>
-
-              {isLoading ? (
-                <div className="loading-state">
-                  <div className="loading-spinner"></div>
-                  <p className="loading-text">Loading posts...</p>
-                </div>
-              ) : (
-                <div className="posts-grid">
-                  {posts.map(post => (
-                    <div key={post._id} className="post-card">
-                      {post.coverImage && (
-                        <div className="post-image-container">
-                          <img src={post.coverImage} alt={post.title} className="post-image" />
-                          <div className="post-overlay">
-                            <span className={`status-badge ${post.published ? 'published' : 'draft'}`}>
-                              {post.published ? '📢 Published' : '📝 Draft'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="post-content">
-                        <h3 className="post-title">{post.title}</h3>
-                        
-                        <div className="post-meta">
-                          <span className="meta-item">🔗 {post.slug}</span>
-                          <span className="meta-item">📅 {new Date(post.createdAt).toLocaleDateString()}</span>
-                          <span className="meta-item">❤️ {post.likes || 0} likes</span>
-                        </div>
-                        
-                        <p className="post-excerpt">{post.excerpt}</p>
-                        
-                        <div className="post-actions">
-                          <button className="action-btn preview" onClick={() => handlePreview(post)}>
-                            <span>👁️</span> Preview
-                          </button>
-                          <button className="action-btn toggle" onClick={() => handleTogglePublish(post)}>
-                            <span>{post.published ? '📝' : '📢'}</span>
-                            {post.published ? 'Unpublish' : 'Publish'}
-                          </button>
-                          <button className="action-btn delete" onClick={() => handleDelete(post._id)}>
-                            <span>🗑️</span> Delete
-                          </button>
-                        </div>
+                    <div className="form-group">
+                      <label className="form-label">
+                        <span className="label-icon">◉</span>
+                        Slug
+                      </label>
+                      <div className="input-wrapper">
+                        <input 
+                          className="form-input"
+                          placeholder="unique-post-identifier" 
+                          value={slug} 
+                          onChange={(e) => setSlug(e.target.value)} 
+                        />
+                        <div className="input-focus-ring" />
                       </div>
                     </div>
-                  ))}
+                  </div>
                   
-                  {posts.length === 0 && (
-                    <div className="empty-state">
-                      <div className="empty-icon">📝</div>
-                      <h3 className="empty-title">No posts yet</h3>
-                      <p className="empty-description">Create your first blog post to get started!</p>
-                      <button className="submit-button" onClick={() => setActiveTab('create')}>
-                        <span className="button-icon">✨</span>
-                        Create Your First Post
+                  <div className="form-group">
+                    <div className="editor-header">
+                      <label className="form-label">
+                        <span className="label-icon">✦</span>
+                        Content
+                      </label>
+                      <button
+                        type="button"
+                        className={`preview-toggle ${isPreviewMode ? 'active' : ''}`}
+                        onClick={togglePreview}
+                      >
+                        <span className="toggle-icon">{isPreviewMode ? '✎' : '◉'}</span>
+                        {isPreviewMode ? 'Edit Mode' : 'Preview Mode'}
                       </button>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Preview Tab */}
-          {activeTab === 'preview' && previewPost && (
-            <div className="tab-content">
-              <div className="preview-header">
-                <button className="back-button" onClick={() => setActiveTab('manage')}>
-                  ← Back to Manage
-                </button>
+                    {!isPreviewMode && (
+                      <div className="toolbar">
+                        <div className="toolbar-group">
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('bold')} title="Bold">
+                            <strong>B</strong>
+                          </button>
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('italic')} title="Italic">
+                            <em>I</em>
+                          </button>
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('underline')} title="Underline">
+                            <u>U</u>
+                          </button>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <select
+                            className="toolbar-select"
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              formatText('formatBlock', value === 'p' ? '<p>' : `<${value}>`);
+                            }}
+                            title="Heading"
+                          >
+                            <option value="p">Paragraph</option>
+                            <option value="h1">H1</option>
+                            <option value="h2">H2</option>
+                            <option value="h3">H3</option>
+                          </select>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('insertUnorderedList')} title="Bullet List">
+                            • List
+                          </button>
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('insertOrderedList')} title="Numbered List">
+                            1. List
+                          </button>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('justifyLeft')} title="Align Left">
+                            ←
+                          </button>
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('justifyCenter')} title="Align Center">
+                            ↔
+                          </button>
+                          <button type="button" className="toolbar-btn" onClick={() => formatText('justifyRight')} title="Align Right">
+                            →
+                          </button>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <button
+                            type="button"
+                            className="toolbar-btn"
+                            onClick={() => {
+                              const url = prompt('Enter URL:');
+                              if (url) formatText('createLink', url);
+                            }}
+                            title="Insert Link"
+                          >
+                            🔗
+                          </button>
+                          <button
+                            type="button"
+                            className="toolbar-btn"
+                            onClick={() => {
+                              const selection = window.getSelection();
+                              if (selection.toString()) {
+                                insertHTML('<code>' + selection.toString() + '</code>');
+                              } else {
+                                insertHTML('<code>code</code>');
+                              }
+                            }}
+                            title="Insert Code"
+                          >
+                            {'</>'}
+                          </button>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <input
+                            type="color"
+                            value={fontColor}
+                            onChange={handleFontColorChange}
+                            className="color-picker"
+                            title="Font Color"
+                          />
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <select
+                            className="toolbar-select"
+                            value={fontFamily}
+                            onChange={handleFontFamilyChange}
+                            title="Font Family"
+                          >
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Times New Roman">Times</option>
+                            <option value="Courier New">Courier</option>
+                          </select>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <select
+                            className="toolbar-select"
+                            value={lineSpacing}
+                            onChange={handleLineSpacingChange}
+                            title="Line Spacing"
+                          >
+                            <option value="normal">Normal</option>
+                            <option value="single">1.0</option>
+                            <option value="1.5">1.5</option>
+                            <option value="double">2.0</option>
+                          </select>
+                        </div>
+
+                        <div className="toolbar-divider" />
+
+                        <div className="toolbar-group">
+                          <button type="button" className="toolbar-btn danger" onClick={() => formatText('removeFormat')} title="Clear Formatting">
+                            ✕ Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="editor-wrapper">
+                      {!isPreviewMode ? (
+                        <div
+                          ref={contentRef}
+                          contentEditable
+                          className="content-editor"
+                          onInput={handleContentInput}
+                          data-placeholder="Start crafting your masterpiece..."
+                          suppressContentEditableWarning={true}
+                        />
+                      ) : (
+                        <div
+                          className="content-preview"
+                          dangerouslySetInnerHTML={{ __html: content }}
+                        />
+                      )}
+                      <div className="editor-corner-tl" />
+                      <div className="editor-corner-br" />
+                    </div>
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">
+                        <span className="label-icon">◈</span>
+                        Tags
+                      </label>
+                      <div className="input-wrapper">
+                        <input 
+                          className="form-input"
+                          placeholder="technology, business, design" 
+                          value={tags} 
+                          onChange={(e) => setTags(e.target.value)} 
+                        />
+                        <div className="input-focus-ring" />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">
+                        <span className="label-icon">◉</span>
+                        Cover Image
+                      </label>
+                      <div className="file-input-wrapper">
+                        <input 
+                          type="file" 
+                          multiple 
+                          onChange={handleFiles}
+                          className="file-input"
+                          id="file-upload"
+                        />
+                        <label htmlFor="file-upload" className="file-label">
+                          <span className="file-icon">✦</span>
+                          <span className="file-text">Choose Images</span>
+                        </label>
+                        {files.length > 0 && (
+                          <span className="file-count">{files.length} selected</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="publish-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={published} 
+                      onChange={(e) => setPublished(e.target.checked)} 
+                      id="pub"
+                      className="toggle-input"
+                    />
+                    <label htmlFor="pub" className="toggle-label">
+                      <span className="toggle-switch">
+                        <span className="toggle-switch-handle" />
+                      </span>
+                      <span className="toggle-text">
+                        {published ? '✨ Publish immediately' : '📝 Save as draft'}
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <button className="submit-button" type="submit">
+                    <span className="button-glow" />
+                    <span className="button-icon">✦</span>
+                    <span className="button-text">Publish Story</span>
+                    <span className="button-arrow">→</span>
+                  </button>
+                </form>
               </div>
+            )}
 
-              <div className="preview-container">
-                {previewPost.coverImage && (
-                  <div className="preview-cover">
-                    <img src={previewPost.coverImage} alt={previewPost.title} />
+            {/* Manage Posts Tab */}
+            {activeTab === 'manage' && (
+              <div className="tab-content manage-tab">
+                <div className="section-header">
+                  <div className="section-header-glow" />
+                  <h2 className="section-title">
+                    <span className="title-accent">◈</span>
+                    Content Library
+                  </h2>
+                  <div className="post-stats">
+                    <span className="stat-chip published">{posts.filter(p => p.published).length} Published</span>
+                    <span className="stat-chip draft">{posts.filter(p => !p.published).length} Drafts</span>
+                  </div>
+                </div>
+
+                {isLoading ? (
+                  <div className="loading-state">
+                    <div className="loading-ring">
+                      <div /><div /><div /><div />
+                    </div>
+                    <p className="loading-text">Curating your content...</p>
+                  </div>
+                ) : (
+                  <div className="posts-grid">
+                    {posts.map((post, index) => {
+                      const isHovered = hoveredCard === post._id;
+                      return (
+                        <article
+                          key={post._id}
+                          className={`post-card ${isHovered ? 'post-card-hovered' : ''}`}
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                          onMouseEnter={() => setHoveredCard(post._id)}
+                          onMouseLeave={() => setHoveredCard(null)}
+                        >
+                          <div className="card-top-accent" />
+                          
+                          <div className="card-image-wrap">
+                            <div className={`card-image-overlay ${isHovered ? 'overlay-hovered' : ''}`} />
+                            {post.coverImage ? (
+                              <img
+                                src={post.coverImage}
+                                alt={post.title}
+                                className={`card-img ${isHovered ? 'card-img-hovered' : ''}`}
+                              />
+                            ) : (
+                              <div className={`card-placeholder ${isHovered ? 'placeholder-hovered' : ''}`}>
+                                <span className="placeholder-icon">✦</span>
+                              </div>
+                            )}
+                            
+                            <div className={`card-badge ${post.published ? 'badge-live' : 'badge-draft'}`}>
+                              <span className="badge-dot" />
+                              {post.published ? 'Published' : 'Draft'}
+                            </div>
+                            
+                            <div className="card-number">
+                              {String(index + 1).padStart(2, '0')}
+                            </div>
+                          </div>
+
+                          <div className="card-body">
+                            <h3 className="card-title">{post.title}</h3>
+                            
+                            <div className="card-meta">
+                              <span className="meta-item">📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                              <span className="meta-item">❤️ {post.likes || 0}</span>
+                            </div>
+                            
+                            <p className={`card-excerpt ${isHovered ? 'excerpt-hovered' : ''}`}>
+                              {post.excerpt}
+                            </p>
+                            
+                            {post.tags && (
+                              <div className="card-tags">
+                                {(Array.isArray(post.tags) ? post.tags : post.tags.split(','))
+                                  .slice(0, 2)
+                                  .map((tag, ti) => (
+                                    <span key={ti} className="tag-pill">
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                              </div>
+                            )}
+
+                            <div className="card-actions">
+                              <button className="action-btn preview" onClick={() => handlePreview(post)}>
+                                <span className="action-icon">◉</span>
+                                <span>Preview</span>
+                              </button>
+                              <button className="action-btn toggle" onClick={() => handleTogglePublish(post)}>
+                                <span className="action-icon">{post.published ? '📝' : '✨'}</span>
+                                <span>{post.published ? 'Unpublish' : 'Publish'}</span>
+                              </button>
+                              <button className="action-btn delete" onClick={() => handleDelete(post._id)}>
+                                <span className="action-icon">✕</span>
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="card-corner-tl" />
+                          <div className="card-corner-br" />
+                        </article>
+                      );
+                    })}
+                    
+                    {posts.length === 0 && (
+                      <div className="empty-state">
+                        <div className="empty-icon-wrap">
+                          <span className="empty-icon">✦</span>
+                          <div className="empty-icon-ring" />
+                        </div>
+                        <h3 className="empty-title">No Stories Yet</h3>
+                        <p className="empty-text">
+                          Begin your content journey by creating your first masterpiece.
+                        </p>
+                        <button className="create-first-btn" onClick={() => setActiveTab('create')}>
+                          <span className="btn-glow" />
+                          <span className="btn-icon">✦</span>
+                          <span>Create First Story</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
-                
-                <h1 className="preview-title">{previewPost.title}</h1>
-                
-                <div className="preview-meta">
-                  <span className="preview-meta-item">📅 {new Date(previewPost.createdAt).toLocaleString()}</span>
-                  <span className="preview-meta-item">❤️ {previewPost.likes || 0} likes</span>
-                  <span className={`preview-status ${previewPost.published ? 'published' : 'draft'}`}>
-                    {previewPost.published ? '📢 Published' : '📝 Draft'}
-                  </span>
+              </div>
+            )}
+
+            {/* Preview Tab */}
+            {activeTab === 'preview' && previewPost && (
+              <div className="tab-content preview-tab">
+                <div className="preview-header">
+                  <button className="back-button" onClick={() => setActiveTab('manage')}>
+                    <span className="back-icon">←</span>
+                    <span>Back to Library</span>
+                  </button>
+                  <div className={`preview-status-badge ${previewPost.published ? 'published' : 'draft'}`}>
+                    <span className="status-dot" />
+                    {previewPost.published ? 'Published' : 'Draft'}
+                  </div>
                 </div>
 
-                <div className="preview-content" dangerouslySetInnerHTML={{ __html: previewPost.content }} />
+                <div className="preview-container">
+                  {previewPost.coverImage && (
+                    <div className="preview-cover">
+                      <img src={previewPost.coverImage} alt={previewPost.title} />
+                      <div className="preview-cover-overlay" />
+                    </div>
+                  )}
+                  
+                  <h1 className="preview-title">{previewPost.title}</h1>
+                  
+                  <div className="preview-meta">
+                    <span className="preview-meta-item">
+                      <span className="meta-icon">📅</span>
+                      {new Date(previewPost.createdAt).toLocaleString()}
+                    </span>
+                    <span className="preview-meta-item">
+                      <span className="meta-icon">❤️</span>
+                      {previewPost.likes || 0} likes
+                    </span>
+                  </div>
+
+                  <div className="preview-divider">
+                    <span className="divider-dot" />
+                    <span className="divider-line" />
+                    <span className="divider-diamond">◇</span>
+                    <span className="divider-line" />
+                    <span className="divider-dot" />
+                  </div>
+
+                  <div className="preview-content" dangerouslySetInnerHTML={{ __html: previewPost.content }} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+
+        {/* Footer Strip */}
+        <div className="footer-strip">
+          <span className="footer-text">Brandscapers Africa · Executive Command Center</span>
         </div>
       </div>
 
       <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+          --navy-darkest: #04101f;
+          --navy-dark: #0a1929;
+          --navy-mid: #0d2347;
+          --navy-bright: #1338be;
+          --blue-mid: #1a5fdb;
+          --blue-vivid: #2979ff;
+          --blue-light: #5c9fff;
+          --blue-pale: #90c9ff;
+          --blue-ghost: #c8e2ff;
+          --white: #ffffff;
+          --off-white: #f0f6ff;
+          --glass-w10: rgba(255,255,255,0.10);
+          --glass-w15: rgba(255,255,255,0.15);
+          --glass-w20: rgba(255,255,255,0.20);
+          --glass-border: rgba(255,255,255,0.18);
+          --glass-border-bright: rgba(255,255,255,0.35);
+          --text-on-dark: rgba(255,255,255,0.92);
+          --text-muted-dark: rgba(180,215,255,0.80);
+          --font-display: 'Cormorant Garamond', Georgia, serif;
+          --font-body: 'Outfit', system-ui, sans-serif;
+          --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+          --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .admin-container {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ── ROOT ── */
+        .admin-root {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0a2463 0%, #1565c0 25%, #42a5f5 50%, #90caf9 75%, #e3f2fd 100%);
-          background-size: 400% 400%;
-          animation: gradientFlow 20s ease infinite;
-          padding: 2rem 0;
+          font-family: var(--font-body);
+          position: relative;
+          overflow-x: hidden;
         }
 
-        @keyframes gradientFlow {
+        /* ── BACKGROUND SYSTEM (matching home page) ── */
+        .bg-base {
+          position: fixed; inset: 0; z-index: 0;
+          background: linear-gradient(
+            160deg,
+            var(--navy-darkest) 0%,
+            var(--navy-dark) 18%,
+            var(--navy-mid) 38%,
+            #0f3264 55%,
+            #1a5fdb 75%,
+            #3a7fd4 88%,
+            #6fb3e8 100%
+          );
+        }
+
+        .bg-noise {
+          position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size: 180px;
+        }
+
+        .bg-orb {
+          position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+          filter: blur(100px);
+        }
+        .bg-orb-1 {
+          width: 700px; height: 700px; top: -200px; right: -150px;
+          background: radial-gradient(circle, rgba(41,121,255,0.22), transparent 70%);
+          animation: orb-drift 20s ease-in-out infinite alternate;
+        }
+        .bg-orb-2 {
+          width: 500px; height: 500px; bottom: 0; left: -100px;
+          background: radial-gradient(circle, rgba(10,22,40,0.5), transparent 70%);
+          animation: orb-drift 25s ease-in-out infinite alternate-reverse;
+        }
+        .bg-orb-3 {
+          width: 400px; height: 400px; top: 40%; left: 30%;
+          background: radial-gradient(circle, rgba(92,159,255,0.15), transparent 70%);
+          animation: orb-drift 18s ease-in-out 3s infinite alternate;
+        }
+        .bg-orb-4 {
+          width: 300px; height: 300px; bottom: 20%; right: 10%;
+          background: radial-gradient(circle, rgba(19,56,190,0.2), transparent 70%);
+          animation: orb-drift 22s ease-in-out 6s infinite alternate-reverse;
+        }
+
+        @keyframes orb-drift {
+          0% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(40px,-30px) scale(1.1); }
+          100% { transform: translate(-20px, 40px) scale(0.9); }
+        }
+
+        .bg-lines {
+          position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+          background-image:
+            linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+          background-size: 80px 80px;
+        }
+
+        /* ── ADMIN CONTAINER ── */
+        .admin-container {
+          position: relative;
+          z-index: 1;
+          max-width: 1600px;
+          margin: 0 auto;
+          padding: 2rem 2rem 0;
+        }
+
+        /* ── HERO SECTION ── */
+        .hero-section {
+          position: relative;
+          margin-bottom: 2rem;
+        }
+
+        .hero-glass {
+          position: relative;
+          background: linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.05) 100%);
+          backdrop-filter: blur(60px) saturate(200%);
+          -webkit-backdrop-filter: blur(60px) saturate(200%);
+          border-radius: 48px;
+          border: 1px solid var(--glass-border);
+          padding: 3rem;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25), 0 0 80px rgba(41,121,255,0.12);
+        }
+
+        .hero-top-line {
+          position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(41,121,255,0.7), rgba(92,159,255,1), rgba(41,121,255,0.7), transparent);
+          animation: shimmer-line 4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer-line {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        .hero-badge-row { margin-bottom: 1.5rem; }
+
+        .hero-badge {
+          display: inline-block;
+          font-family: var(--font-body);
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 4px;
+          color: var(--blue-pale);
+          border: 1px solid rgba(144,201,255,0.3);
+          border-radius: 40px;
+          padding: 0.5rem 1.5rem;
+          background: rgba(41,121,255,0.1);
+          backdrop-filter: blur(20px);
+        }
+
+        .hero-title {
+          display: flex; flex-direction: column;
+          margin-bottom: 1rem;
+        }
+
+        .hero-title-top {
+          font-family: var(--font-display);
+          font-size: 4rem;
+          font-weight: 700;
+          font-style: italic;
+          color: var(--white);
+          line-height: 1;
+          letter-spacing: -0.03em;
+          text-shadow: 0 0 60px rgba(255,255,255,0.2);
+        }
+
+        .hero-title-bottom {
+          font-family: var(--font-body);
+          font-size: 1.2rem;
+          font-weight: 300;
+          letter-spacing: 8px;
+          text-transform: uppercase;
+          background: linear-gradient(90deg, var(--blue-pale), var(--white), var(--blue-pale));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: text-shimmer 5s ease-in-out infinite;
+          background-size: 200%;
+        }
+
+        @keyframes text-shimmer {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
 
-        .container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 0 2rem;
+        .hero-subtitle {
+          color: var(--text-muted-dark);
+          font-size: 1.1rem;
+          font-weight: 400;
+          line-height: 1.8;
+          max-width: 720px;
+          margin: 0 0 2rem;
         }
 
-        /* Dashboard Header */
-        .dashboard-header {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
-          backdrop-filter: blur(30px);
-          -webkit-backdrop-filter: blur(30px);
-          border-radius: 24px;
-          padding: 2.5rem;
-          margin-bottom: 2rem;
-          border: 2px solid rgba(255, 255, 255, 0.5);
-          box-shadow: 0 25px 60px rgba(13, 71, 161, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        .hero-divider {
+          display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;
+        }
+        .hero-divider-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+        .hero-divider-line { flex: 1; max-width: 80px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); }
+        .hero-divider-diamond { color: rgba(144,201,255,0.6); font-size: 0.8rem; }
+
+        /* Stats */
+        .stats-row {
+          display: flex; gap: 1.5rem;
+          flex-wrap: wrap;
         }
 
-        .header-content {
+        .stat-card {
+          flex: 1; min-width: 140px;
+          background: rgba(0,0,0,0.25);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 20px;
+          padding: 1.5rem;
           text-align: center;
-          margin-bottom: 2rem;
+          cursor: default;
+          transition: all 0.4s var(--ease-out);
+          position: relative; overflow: hidden;
         }
 
-        .dashboard-title {
-          font-size: 3rem;
-          font-weight: 900;
-          background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin-bottom: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1rem;
+        .stat-card::before {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(135deg, rgba(41,121,255,0.15), transparent);
+          opacity: 0; transition: opacity 0.4s;
         }
 
-        .title-icon {
+        .stat-hovered {
+          transform: translateY(-8px);
+          border-color: rgba(41,121,255,0.5);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 30px rgba(41,121,255,0.2);
+        }
+        .stat-hovered::before { opacity: 1; }
+
+        .stat-icon { font-size: 1rem; color: var(--blue-light); margin-bottom: 0.5rem; }
+
+        .stat-number {
+          font-family: var(--font-display);
           font-size: 2.5rem;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-
-        .dashboard-subtitle {
-          color: #4a5568;
-          font-size: 1.2rem;
-          font-weight: 500;
-        }
-
-        .stats-bar {
-          display: flex;
-          justify-content: center;
-          gap: 3rem;
-        }
-
-        .stat-item {
-          text-align: center;
-        }
-
-        .stat-value {
-          font-size: 2.5rem;
-          font-weight: 900;
-          background: linear-gradient(135deg, #0d47a1, #42a5f5);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          font-weight: 700;
+          color: var(--white);
+          line-height: 1;
+          margin-bottom: 0.4rem;
+          text-shadow: 0 0 20px rgba(255,255,255,0.3);
         }
 
         .stat-label {
-          color: #718096;
-          font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 2px;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          color: var(--blue-pale);
+          opacity: 0.8;
         }
 
-        /* Main Card */
-        .main-card {
-          background: rgba(255, 255, 255, 0.97);
-          backdrop-filter: blur(30px);
-          -webkit-backdrop-filter: blur(30px);
-          border-radius: 24px;
-          border: 2px solid rgba(255, 255, 255, 0.5);
-          box-shadow: 0 25px 60px rgba(13, 71, 161, 0.3);
+        /* Main Glass Card */
+        .main-glass-card {
+          background: rgba(10,25,41,0.3);
+          backdrop-filter: blur(60px) saturate(200%);
+          -webkit-backdrop-filter: blur(60px) saturate(200%);
+          border-radius: 48px;
+          border: 1px solid var(--glass-border);
           overflow: hidden;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+          margin-bottom: 2rem;
         }
 
-        /* Tabs */
+        /* Tab Navigation */
         .tab-navigation {
           display: flex;
-          border-bottom: 2px solid rgba(66, 165, 245, 0.2);
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.8));
-          padding: 0.5rem;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+          padding: 1.5rem 1.5rem 0;
           gap: 0.5rem;
         }
 
         .tab-button {
-          flex: 1;
-          padding: 1.2rem 2rem;
+          position: relative;
+          padding: 1rem 2rem;
           border: none;
           background: transparent;
-          color: #718096;
+          color: var(--text-muted-dark);
           font-weight: 700;
           font-size: 1rem;
-          border-radius: 16px;
+          letter-spacing: 1px;
+          border-radius: 30px 30px 0 0;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.3s var(--ease-out);
           display: flex;
           align-items: center;
-          justify-content: center;
           gap: 0.75rem;
-          position: relative;
+          overflow: hidden;
         }
 
         .tab-button:hover:not(:disabled) {
-          background: rgba(66, 165, 245, 0.1);
-          color: #1976d2;
+          color: var(--white);
+          background: rgba(255,255,255,0.05);
           transform: translateY(-2px);
         }
 
         .tab-button.active {
-          background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
-          color: white;
-          box-shadow: 0 8px 20px rgba(13, 71, 161, 0.4);
+          color: var(--white);
+          background: linear-gradient(135deg, rgba(41,121,255,0.2), rgba(92,159,255,0.1));
+          border-bottom: 2px solid var(--blue-vivid);
         }
 
         .tab-button:disabled {
@@ -851,97 +1117,105 @@ export default function AdminDashboard() {
         }
 
         .tab-icon {
-          font-size: 1.3rem;
+          font-size: 1.2rem;
+          color: var(--blue-light);
         }
 
         .tab-badge {
-          background: rgba(255, 255, 255, 0.3);
-          padding: 0.25rem 0.75rem;
+          background: rgba(255,255,255,0.15);
+          padding: 0.2rem 0.7rem;
           border-radius: 20px;
-          font-size: 0.85rem;
-          font-weight: 800;
-          margin-left: 0.5rem;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--blue-pale);
         }
 
-        /* Tab Content */
-        .tab-content {
-          padding: 3rem;
+        .tab-glow {
+          position: absolute; inset: 0;
+          background: radial-gradient(circle at center, rgba(41,121,255,0.2), transparent 70%);
+          opacity: 0.5;
+          animation: tab-glow 3s ease-in-out infinite;
         }
 
+        @keyframes tab-glow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
+
+        .tab-content-wrapper {
+          padding: 2.5rem;
+        }
+
+        /* Section Header */
         .section-header {
+          position: relative;
           margin-bottom: 2.5rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 1rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section-header-glow {
+          position: absolute; top: -2rem; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, var(--blue-vivid), transparent);
+          animation: header-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes header-glow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
         }
 
         .section-title {
+          font-family: var(--font-display);
+          font-size: 2.2rem;
+          font-weight: 700;
+          font-style: italic;
+          color: var(--white);
+          margin-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .title-accent {
+          color: var(--blue-light);
           font-size: 2rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #0d47a1, #42a5f5);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
         }
 
         .section-description {
-          color: #718096;
-          font-size: 1.1rem;
-          margin-top: 0.5rem;
+          color: var(--text-muted-dark);
+          font-size: 1rem;
+          font-weight: 400;
         }
 
         .post-stats {
           display: flex;
           gap: 1rem;
+          margin-top: 1rem;
         }
 
         .stat-chip {
           padding: 0.5rem 1.2rem;
-          border-radius: 20px;
+          border-radius: 30px;
           font-weight: 700;
-          font-size: 0.9rem;
+          font-size: 0.8rem;
+          letter-spacing: 1px;
+          border: 1px solid rgba(255,255,255,0.15);
+          background: rgba(255,255,255,0.05);
+          color: var(--text-muted-dark);
         }
 
         .stat-chip.published {
-          background: linear-gradient(135deg, #48bb78, #38a169);
-          color: white;
+          color: var(--blue-pale);
+          border-color: rgba(92,159,255,0.3);
         }
 
         .stat-chip.draft {
-          background: linear-gradient(135deg, #ed8936, #dd6b20);
-          color: white;
+          color: #fbbf24;
+          border-color: rgba(251,191,36,0.3);
         }
 
-        /* Loading State */
-        .loading-state {
-          text-align: center;
-          padding: 4rem;
-        }
-
-        .loading-spinner {
-          border: 4px solid rgba(66, 165, 245, 0.1);
-          border-top: 4px solid #42a5f5;
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 1.5rem;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-          color: #718096;
-          font-size: 1.1rem;
-          font-weight: 600;
-        }
-
-        /* Form */
+        /* Form Styles */
         .form-container {
           width: 100%;
         }
@@ -959,9 +1233,10 @@ export default function AdminDashboard() {
         }
 
         .form-label {
-          color: #2d3748;
+          color: var(--text-on-dark);
           font-weight: 700;
-          font-size: 1rem;
+          font-size: 0.9rem;
+          letter-spacing: 1px;
           margin-bottom: 0.75rem;
           display: flex;
           align-items: center;
@@ -969,39 +1244,55 @@ export default function AdminDashboard() {
         }
 
         .label-icon {
-          font-size: 1.2rem;
+          color: var(--blue-light);
+          font-size: 1rem;
+        }
+
+        .input-wrapper {
+          position: relative;
+          width: 100%;
         }
 
         .form-input {
-          padding: 1rem 1.5rem;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-radius: 16px;
-          font-size: 1rem;
-          font-weight: 500;
-          color: #2d3748;
-          background: rgba(255, 255, 255, 0.8);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           width: 100%;
+          padding: 1rem 1.5rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--glass-border);
+          border-radius: 20px;
+          font-family: var(--font-body);
+          font-size: 1rem;
+          color: var(--white);
+          transition: all 0.3s var(--ease-out);
+          position: relative;
+          z-index: 1;
         }
 
         .form-input:focus {
           outline: none;
-          border-color: #42a5f5;
-          background: white;
-          box-shadow: 0 8px 20px rgba(66, 165, 245, 0.2), 0 0 0 4px rgba(66, 165, 245, 0.1);
-          transform: translateY(-2px);
+          border-color: var(--blue-vivid);
+          background: rgba(255,255,255,0.08);
+          box-shadow: 0 0 30px rgba(41,121,255,0.2);
         }
 
         .form-input::placeholder {
-          color: #a0aec0;
+          color: rgba(255,255,255,0.3);
+          font-style: italic;
         }
 
-        .file-input {
-          cursor: pointer;
-          padding: 0.8rem 1.5rem;
+        .input-focus-ring {
+          position: absolute; inset: -2px;
+          border-radius: 22px;
+          background: linear-gradient(135deg, var(--blue-vivid), transparent);
+          opacity: 0;
+          transition: opacity 0.3s;
+          z-index: 0;
         }
 
-        /* Editor */
+        .form-input:focus + .input-focus-ring {
+          opacity: 0.3;
+        }
+
+        /* Editor Header */
         .editor-header {
           display: flex;
           justify-content: space-between;
@@ -1010,115 +1301,132 @@ export default function AdminDashboard() {
         }
 
         .preview-toggle {
-          padding: 0.75rem 1.5rem;
-          border: 2px solid rgba(66, 165, 245, 0.3);
-          border-radius: 12px;
-          background: white;
-          color: #1976d2;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1.5rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--glass-border);
+          border-radius: 30px;
+          color: var(--text-muted-dark);
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 0.85rem;
+          letter-spacing: 1px;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s var(--ease-out);
         }
 
         .preview-toggle:hover {
-          background: linear-gradient(135deg, #42a5f5, #1976d2);
-          color: white;
-          border-color: transparent;
+          background: rgba(255,255,255,0.1);
+          border-color: var(--blue-light);
+          color: var(--white);
           transform: translateY(-2px);
         }
 
         .preview-toggle.active {
-          background: linear-gradient(135deg, #0d47a1, #1976d2);
-          color: white;
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
           border-color: transparent;
+          color: var(--white);
+        }
+
+        .toggle-icon {
+          font-size: 1rem;
         }
 
         /* Toolbar */
         .toolbar {
-          background: linear-gradient(135deg, #f8fafc, #edf2f7);
-          border: 2px solid rgba(66, 165, 245, 0.2);
+          background: rgba(0,0,0,0.3);
+          border: 1px solid var(--glass-border);
           border-bottom: none;
-          border-radius: 16px 16px 0 0;
+          border-radius: 20px 20px 0 0;
           padding: 1rem;
           display: flex;
           flex-wrap: wrap;
           gap: 0.5rem;
           align-items: center;
+          backdrop-filter: blur(20px);
         }
 
         .toolbar-group {
           display: flex;
           gap: 0.25rem;
+          flex-wrap: wrap;
         }
 
         .toolbar-divider {
-          width: 2px;
-          height: 32px;
-          background: rgba(66, 165, 245, 0.2);
+          width: 1px;
+          height: 30px;
+          background: rgba(255,255,255,0.1);
           margin: 0 0.5rem;
         }
 
         .toolbar-btn {
           padding: 0.6rem 1rem;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-radius: 10px;
-          background: white;
-          color: #4a5568;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          color: var(--text-muted-dark);
           font-weight: 700;
           font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.2s var(--ease-out);
           display: flex;
           align-items: center;
           gap: 0.25rem;
+          min-width: 40px;
+          justify-content: center;
         }
 
         .toolbar-btn:hover {
-          background: linear-gradient(135deg, #42a5f5, #1976d2);
-          color: white;
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
           border-color: transparent;
+          color: var(--white);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3);
+          box-shadow: 0 4px 15px rgba(41,121,255,0.3);
         }
 
         .toolbar-btn.danger:hover {
-          background: linear-gradient(135deg, #f56565, #e53e3e);
+          background: linear-gradient(135deg, #ef4444, #dc2626);
         }
 
         .toolbar-select {
           padding: 0.6rem 1rem;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-radius: 10px;
-          background: white;
-          color: #4a5568;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          color: var(--text-muted-dark);
           font-weight: 700;
           font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.2s var(--ease-out);
+          outline: none;
         }
 
         .toolbar-select:hover {
-          border-color: #42a5f5;
-          box-shadow: 0 4px 12px rgba(66, 165, 245, 0.2);
+          border-color: var(--blue-light);
+          color: var(--white);
         }
 
-        /* Color Picker */
+        .toolbar-select option {
+          background: var(--navy-dark);
+          color: var(--white);
+        }
+
         .color-picker {
           width: 40px;
           height: 40px;
           padding: 0;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-radius: 10px;
+          border: 2px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
           cursor: pointer;
-          background: white;
-          transition: all 0.2s ease;
+          background: transparent;
+          transition: all 0.2s var(--ease-out);
         }
 
         .color-picker:hover {
-          border-color: #42a5f5;
+          border-color: var(--blue-vivid);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3);
+          box-shadow: 0 4px 15px rgba(41,121,255,0.3);
         }
 
         .color-picker::-webkit-color-swatch-wrapper {
@@ -1127,70 +1435,115 @@ export default function AdminDashboard() {
 
         .color-picker::-webkit-color-swatch {
           border: none;
-          border-radius: 8px;
+          border-radius: 10px;
         }
 
-        /* Content Editor */
+        /* Editor Wrapper */
+        .editor-wrapper {
+          position: relative;
+        }
+
         .content-editor {
-          min-height: 500px;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-top: none;
-          border-radius: 0 0 16px 16px;
+          min-height: 400px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--glass-border);
+          border-radius: 0 0 20px 20px;
           padding: 2rem;
-          background: white;
-          font-size: 1.05rem;
+          font-family: var(--font-body);
+          font-size: 1rem;
           line-height: 1.8;
-          color: #2d3748;
+          color: var(--white);
           outline: none;
           overflow-y: auto;
-          width: 100%;
+          position: relative;
+          z-index: 1;
         }
 
         .content-editor:focus {
-          border-color: #42a5f5;
-          box-shadow: 0 8px 20px rgba(66, 165, 245, 0.15);
+          border-color: var(--blue-vivid);
+          box-shadow: 0 0 30px rgba(41,121,255,0.1);
         }
 
         .content-editor[data-placeholder]:empty:before {
           content: attr(data-placeholder);
-          color: #a0aec0;
+          color: rgba(255,255,255,0.3);
           font-style: italic;
         }
 
-        .content-editor h1 { font-size: 2.5rem; font-weight: 700; color: #2d3748; margin: 1.5rem 0 1rem; }
-        .content-editor h2 { font-size: 2rem; font-weight: 600; color: #2d3748; margin: 1.25rem 0 0.75rem; }
-        .content-editor h3 { font-size: 1.5rem; font-weight: 600; color: #2d3748; margin: 1rem 0 0.5rem; }
-        .content-editor h4 { font-size: 1.25rem; font-weight: 600; color: #2d3748; margin: 0.75rem 0 0.5rem; }
-        .content-editor p { line-height: 1.8; margin-bottom: 1rem; }
-        .content-editor ul, .content-editor ol { margin: 1rem 0; padding-left: 2rem; }
-        .content-editor li { margin-bottom: 0.5rem; }
-        .content-editor blockquote { border-left: 4px solid #42a5f5; padding-left: 1rem; margin: 1rem 0; color: #718096; font-style: italic; }
-        .content-editor code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 6px; font-family: 'Courier New', monospace; }
-        .content-editor a { color: #1976d2; text-decoration: underline; }
-
         .content-preview {
-          min-height: 500px;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          border-radius: 16px;
+          min-height: 400px;
+          background: rgba(0,0,0,0.2);
+          border: 1px solid var(--glass-border);
+          border-radius: 20px;
           padding: 2rem;
-          background: #f7fafc;
-          font-size: 1.05rem;
+          font-size: 1rem;
           line-height: 1.8;
+          color: var(--white);
           overflow-y: auto;
-          width: 100%;
         }
 
-        .content-preview h1 { font-size: 2.5rem; font-weight: 700; color: #2d3748; margin: 1.5rem 0 1rem; }
-        .content-preview h2 { font-size: 2rem; font-weight: 600; color: #2d3748; margin: 1.25rem 0 0.75rem; }
-        .content-preview h3 { font-size: 1.5rem; font-weight: 600; color: #2d3748; margin: 1rem 0 0.5rem; }
-        .content-preview p { line-height: 1.8; margin-bottom: 1rem; color: #4a5568; }
-        .content-preview img { border-radius: 12px; max-width: 100%; margin: 1rem 0; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); }
+        .editor-corner-tl, .editor-corner-br {
+          position: absolute; width: 20px; height: 20px;
+          border-color: rgba(41,121,255,0.3);
+          border-style: solid;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .editor-corner-tl { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+        .editor-corner-br { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
+
+        /* File Input */
+        .file-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .file-input {
+          position: absolute;
+          width: 0.1px;
+          height: 0.1px;
+          opacity: 0;
+          overflow: hidden;
+          z-index: -1;
+        }
+
+        .file-label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 2rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--glass-border);
+          border-radius: 30px;
+          color: var(--text-muted-dark);
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s var(--ease-out);
+        }
+
+        .file-label:hover {
+          background: rgba(255,255,255,0.1);
+          border-color: var(--blue-light);
+          color: var(--white);
+          transform: translateY(-2px);
+        }
+
+        .file-icon {
+          color: var(--blue-light);
+          font-size: 1.2rem;
+        }
+
+        .file-count {
+          color: var(--blue-pale);
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
 
         /* Publish Toggle */
         .publish-toggle {
           margin: 2rem 0;
-          display: flex;
-          align-items: center;
         }
 
         .toggle-input {
@@ -1200,72 +1553,76 @@ export default function AdminDashboard() {
         .toggle-label {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 1.5rem;
           cursor: pointer;
           user-select: none;
         }
 
         .toggle-switch {
-          width: 60px;
+          width: 64px;
           height: 32px;
-          background: #cbd5e0;
-          border-radius: 20px;
+          background: rgba(255,255,255,0.1);
+          border: 1px solid var(--glass-border);
+          border-radius: 30px;
           position: relative;
-          transition: all 0.3s ease;
+          transition: all 0.3s var(--ease-out);
         }
 
-        .toggle-switch::after {
-          content: '';
+        .toggle-switch-handle {
           position: absolute;
           width: 24px;
           height: 24px;
-          background: white;
+          background: linear-gradient(135deg, var(--blue-light), var(--blue-vivid));
           border-radius: 50%;
-          top: 4px;
-          left: 4px;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          top: 3px;
+          left: 3px;
+          transition: all 0.3s var(--ease-spring);
+          box-shadow: 0 2px 10px rgba(41,121,255,0.5);
         }
 
         .toggle-input:checked + .toggle-label .toggle-switch {
-          background: linear-gradient(135deg, #48bb78, #38a169);
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
         }
 
-        .toggle-input:checked + .toggle-label .toggle-switch::after {
-          left: 32px;
+        .toggle-input:checked + .toggle-label .toggle-switch-handle {
+          left: 35px;
+          background: var(--white);
         }
 
         .toggle-text {
-          color: #2d3748;
+          color: var(--text-on-dark);
           font-weight: 700;
-          font-size: 1.05rem;
+          font-size: 1rem;
+          letter-spacing: 1px;
         }
 
         /* Submit Button */
         .submit-button {
-          padding: 1.2rem 3rem;
+          position: relative;
+          width: 100%;
+          padding: 1.2rem 2rem;
           border: none;
-          border-radius: 16px;
-          background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
+          border-radius: 40px;
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid), var(--blue-light));
           background-size: 200% 200%;
-          color: white;
+          color: var(--white);
           font-weight: 800;
           font-size: 1.1rem;
+          letter-spacing: 2px;
           text-transform: uppercase;
-          letter-spacing: 1px;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 15px 35px rgba(13, 71, 161, 0.4);
+          transition: all 0.4s var(--ease-out);
+          box-shadow: 0 20px 40px rgba(41,121,255,0.3);
           display: flex;
           align-items: center;
-          gap: 0.75rem;
           justify-content: center;
-          margin-top: 2rem;
+          gap: 1rem;
+          overflow: hidden;
         }
 
         .submit-button:hover {
           transform: translateY(-3px);
-          box-shadow: 0 20px 45px rgba(13, 71, 161, 0.5);
+          box-shadow: 0 30px 50px rgba(41,121,255,0.4);
           background-position: 100% 0;
         }
 
@@ -1273,219 +1630,476 @@ export default function AdminDashboard() {
           transform: translateY(-1px);
         }
 
+        .button-glow {
+          position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.5s ease;
+        }
+
+        .submit-button:hover .button-glow {
+          transform: translateX(100%);
+        }
+
         .button-icon {
           font-size: 1.3rem;
+          color: rgba(255,255,255,0.9);
+        }
+
+        .button-arrow {
+          transition: transform 0.3s var(--ease-spring);
+        }
+
+        .submit-button:hover .button-arrow {
+          transform: translateX(5px);
         }
 
         /* Posts Grid */
         .posts-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 2rem;
         }
 
         .post-card {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
-          border-radius: 20px;
-          border: 2px solid rgba(66, 165, 245, 0.2);
-          overflow: hidden;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 8px 25px rgba(13, 71, 161, 0.15);
-        }
-
-        .post-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 50px rgba(13, 71, 161, 0.3);
-          border-color: #42a5f5;
-        }
-
-        .post-image-container {
           position: relative;
-          width: 100%;
-          height: 220px;
+          background: linear-gradient(145deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.05) 100%);
+          backdrop-filter: blur(50px) saturate(180%);
+          -webkit-backdrop-filter: blur(50px) saturate(180%);
+          border-radius: 32px;
+          border: 1px solid var(--glass-border);
+          overflow: hidden;
+          display: flex; flex-direction: column;
+          transition: all 0.5s var(--ease-out);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          opacity: 0;
+          animation: card-rise 0.7s var(--ease-spring) forwards;
+          cursor: pointer;
+        }
+
+        @keyframes card-rise {
+          from { opacity: 0; transform: translateY(50px) scale(0.94); filter: blur(6px); }
+          to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        .post-card-hovered {
+          transform: translateY(-16px) scale(1.02);
+          border-color: rgba(41,121,255,0.5);
+          box-shadow: 0 50px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(41,121,255,0.3), 0 0 60px rgba(41,121,255,0.15);
+        }
+
+        .card-top-accent {
+          position: absolute; top: 0; left: 0; right: 0; height: 0;
+          background: linear-gradient(90deg, var(--navy-bright), var(--blue-vivid), var(--blue-light));
+          transition: height 0.4s var(--ease-out);
+          z-index: 2;
+        }
+
+        .post-card-hovered .card-top-accent { height: 2px; }
+
+        .card-image-wrap {
+          position: relative; height: 200px; overflow: hidden;
+          background: linear-gradient(135deg, var(--navy-dark), var(--navy-mid), var(--blue-mid));
+          flex-shrink: 0;
+        }
+
+        .card-image-overlay {
+          position: absolute; inset: 0; z-index: 1;
+          background: linear-gradient(to bottom, rgba(4,16,31,0.2) 0%, rgba(10,25,41,0.55) 100%);
+          transition: background 0.5s ease;
+        }
+        .overlay-hovered {
+          background: linear-gradient(to bottom, rgba(4,16,31,0.05) 0%, rgba(19,56,190,0.4) 100%);
+        }
+
+        .card-img {
+          width: 100%; height: 100%; object-fit: cover;
+          transition: transform 0.8s var(--ease-out), filter 0.6s ease;
+          transform: scale(1.06);
+          filter: brightness(0.95) saturate(1.1);
+        }
+        .card-img-hovered {
+          transform: scale(1.16) rotate(0.8deg);
+          filter: brightness(1.08) saturate(1.2) contrast(1.05);
+        }
+
+        .card-placeholder {
+          width: 100%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, var(--navy-mid), var(--navy-bright), var(--blue-mid));
+          transition: all 0.5s ease;
+        }
+        .placeholder-hovered { background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid)); }
+
+        .placeholder-icon {
+          font-size: 3rem;
+          color: rgba(255,255,255,0.15);
+          transition: all 0.5s var(--ease-spring);
+        }
+        .placeholder-hovered .placeholder-icon {
+          color: rgba(255,255,255,0.3);
+          transform: scale(1.4) rotate(15deg);
+        }
+
+        .card-badge {
+          position: absolute; top: 1rem; left: 1rem; z-index: 3;
+          display: flex; align-items: center; gap: 0.4rem;
+          padding: 0.35rem 0.9rem;
+          border-radius: 30px;
+          font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+        .badge-live { background: rgba(19,56,190,0.85); color: #aecbff; }
+        .badge-draft { background: rgba(146,64,14,0.85); color: #fde68a; }
+
+        .badge-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+        .badge-live .badge-dot { background: #90c9ff; box-shadow: 0 0 6px #90c9ff; }
+        .badge-draft .badge-dot { background: #fde68a; }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.7); }
+        }
+
+        .card-number {
+          position: absolute; bottom: 1rem; right: 1rem; z-index: 3;
+          font-family: var(--font-display);
+          font-size: 2rem; font-weight: 700; font-style: italic;
+          color: rgba(255,255,255,0.12);
+          line-height: 1;
+          transition: color 0.4s ease;
+        }
+        .post-card-hovered .card-number { color: rgba(255,255,255,0.22); }
+
+        .card-body {
+          padding: 1.5rem;
+          flex: 1; display: flex; flex-direction: column; gap: 1rem;
+        }
+
+        .card-title {
+          font-family: var(--font-display);
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--white);
+          line-height: 1.3;
+          letter-spacing: -0.02em;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
           overflow: hidden;
         }
 
-        .post-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.4s ease;
-        }
-
-        .post-card:hover .post-image {
-          transform: scale(1.1);
-        }
-
-        .post-overlay {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-        }
-
-        .status-badge {
-          padding: 0.5rem 1rem;
-          border-radius: 20px;
-          font-weight: 700;
-          font-size: 0.85rem;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-        }
-
-        .status-badge.published {
-          background: linear-gradient(135deg, rgba(72, 187, 120, 0.9), rgba(56, 161, 105, 0.9));
-          color: white;
-        }
-
-        .status-badge.draft {
-          background: linear-gradient(135deg, rgba(237, 137, 54, 0.9), rgba(221, 107, 32, 0.9));
-          color: white;
-        }
-
-        .post-content {
-          padding: 1.5rem;
-        }
-
-        .post-title {
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: #2d3748;
-          margin-bottom: 1rem;
-          line-height: 1.3;
-        }
-
-        .post-meta {
+        .card-meta {
           display: flex;
-          flex-wrap: wrap;
           gap: 1rem;
-          margin-bottom: 1rem;
-          font-size: 0.85rem;
+          color: var(--text-muted-dark);
+          font-size: 0.8rem;
         }
 
         .meta-item {
-          color: #718096;
-          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
         }
 
-        .post-excerpt {
-          color: #4a5568;
-          line-height: 1.6;
-          margin-bottom: 1.5rem;
-          font-size: 0.95rem;
+        .card-excerpt {
+          font-size: 0.9rem;
+          color: var(--text-muted-dark);
+          line-height: 1.7;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          transition: -webkit-line-clamp 0.3s;
+        }
+        .excerpt-hovered { -webkit-line-clamp: 5; }
+
+        .card-tags {
+          display: flex; flex-wrap: wrap; gap: 0.5rem;
         }
 
-        .post-actions {
+        .tag-pill {
+          font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+          color: var(--blue-pale);
+          background: rgba(41,121,255,0.15);
+          border: 1px solid rgba(41,121,255,0.25);
+          border-radius: 20px;
+          padding: 0.25rem 0.75rem;
+          transition: all 0.3s ease;
+        }
+        .post-card-hovered .tag-pill {
+          background: rgba(41,121,255,0.25);
+          border-color: rgba(41,121,255,0.45);
+        }
+
+        .card-actions {
           display: flex;
           gap: 0.5rem;
+          margin-top: 1rem;
           flex-wrap: wrap;
         }
 
         .action-btn {
           flex: 1;
           min-width: fit-content;
-          padding: 0.7rem 1rem;
+          padding: 0.6rem 1rem;
           border: none;
-          border-radius: 12px;
+          border-radius: 30px;
           font-weight: 700;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          letter-spacing: 0.5px;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s var(--ease-out);
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
-        }
-
-        .action-btn.preview {
-          background: linear-gradient(135deg, #4facfe, #00f2fe);
-          color: white;
-        }
-
-        .action-btn.toggle {
-          background: linear-gradient(135deg, #a0aec0, #718096);
-          color: white;
-        }
-
-        .action-btn.delete {
-          background: linear-gradient(135deg, #fc5c7d, #b81229);
-          color: white;
+          gap: 0.4rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--glass-border);
+          color: var(--text-muted-dark);
+          backdrop-filter: blur(10px);
         }
 
         .action-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+          transform: translateY(-3px);
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
+          border-color: transparent;
+          color: var(--white);
+          box-shadow: 0 10px 20px rgba(41,121,255,0.3);
+        }
+
+        .action-btn.preview:hover {
+          background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .action-btn.delete:hover {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .action-icon {
+          font-size: 0.9rem;
+        }
+
+        .card-corner-tl, .card-corner-br {
+          position: absolute; width: 20px; height: 20px;
+          border-color: rgba(41,121,255,0.3);
+          border-style: solid;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+        .card-corner-tl { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+        .card-corner-br { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
+        .post-card-hovered .card-corner-tl,
+        .post-card-hovered .card-corner-br { opacity: 1; }
+
+        /* Loading State */
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 300px;
+          gap: 2rem;
+        }
+
+        .loading-ring {
+          display: inline-block; position: relative; width: 64px; height: 64px;
+        }
+        .loading-ring div {
+          box-sizing: border-box; display: block; position: absolute;
+          width: 52px; height: 52px; margin: 6px;
+          border: 3px solid transparent;
+          border-radius: 50%;
+          animation: ring-spin 1.3s cubic-bezier(0.5,0,0.5,1) infinite;
+        }
+        .loading-ring div:nth-child(1) { border-top-color: var(--blue-vivid); animation-delay: -0.45s; }
+        .loading-ring div:nth-child(2) { border-top-color: var(--blue-light); animation-delay: -0.3s; }
+        .loading-ring div:nth-child(3) { border-top-color: var(--blue-pale); animation-delay: -0.15s; }
+        .loading-ring div:nth-child(4) { border-top-color: rgba(255,255,255,0.3); }
+
+        @keyframes ring-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+          font-size: 0.85rem; font-weight: 600; letter-spacing: 2px;
+          text-transform: uppercase;
+          color: var(--blue-pale); opacity: 0.7;
         }
 
         /* Empty State */
         .empty-state {
+          grid-column: 1 / -1;
           text-align: center;
           padding: 5rem 2rem;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.8));
-          border-radius: 20px;
-          border: 2px dashed rgba(66, 165, 245, 0.3);
+          background: rgba(255,255,255,0.03);
+          border-radius: 40px;
+          border: 1px dashed var(--glass-border);
+        }
+
+        .empty-icon-wrap {
+          position: relative; display: inline-flex;
+          align-items: center; justify-content: center;
+          width: 80px; height: 80px; margin: 0 auto 2rem;
         }
 
         .empty-icon {
-          font-size: 5rem;
-          margin-bottom: 1.5rem;
-          animation: float 3s ease-in-out infinite;
+          font-size: 2rem; color: var(--blue-pale);
+          position: relative; z-index: 1;
+          animation: icon-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
+        @keyframes icon-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .empty-icon-ring {
+          position: absolute; inset: 0; border-radius: 50%;
+          border: 1px solid rgba(41,121,255,0.3);
+          animation: ring-expand 2.5s ease-in-out infinite;
+        }
+
+        @keyframes ring-expand {
+          0% { transform: scale(1); opacity: 0.5; }
+          100% { transform: scale(1.8); opacity: 0; }
         }
 
         .empty-title {
+          font-family: var(--font-display);
           font-size: 2rem;
-          font-weight: 800;
-          color: #2d3748;
-          margin-bottom: 1rem;
+          font-weight: 700; font-style: italic;
+          color: var(--white); margin-bottom: 1rem;
         }
-
-        .empty-description {
-          font-size: 1.1rem;
-          color: #718096;
+        .empty-text {
+          font-size: 1rem;
+          color: var(--text-muted-dark); line-height: 1.7;
           margin-bottom: 2rem;
         }
 
-        /* Preview Section */
+        .create-first-btn {
+          position: relative;
+          padding: 1rem 2.5rem;
+          border: none;
+          border-radius: 40px;
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
+          color: var(--white);
+          font-weight: 700;
+          font-size: 1rem;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.3s var(--ease-out);
+          display: inline-flex;
+          align-items: center;
+          gap: 0.75rem;
+          overflow: hidden;
+        }
+
+        .create-first-btn:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 20px 40px rgba(41,121,255,0.3);
+        }
+
+        .btn-glow {
+          position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.5s ease;
+        }
+
+        .create-first-btn:hover .btn-glow {
+          transform: translateX(100%);
+        }
+
+        .btn-icon {
+          font-size: 1.1rem;
+        }
+
+        /* Preview Tab */
         .preview-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-bottom: 2rem;
         }
 
         .back-button {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           padding: 0.8rem 1.5rem;
-          border: 2px solid rgba(66, 165, 245, 0.3);
-          border-radius: 12px;
-          background: white;
-          color: #1976d2;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--glass-border);
+          border-radius: 30px;
+          color: var(--text-muted-dark);
           font-weight: 700;
-          font-size: 1rem;
+          font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s var(--ease-out);
         }
 
         .back-button:hover {
-          background: linear-gradient(135deg, #42a5f5, #1976d2);
-          color: white;
-          border-color: transparent;
+          background: rgba(255,255,255,0.1);
+          border-color: var(--blue-light);
+          color: var(--white);
           transform: translateX(-5px);
         }
 
+        .back-icon {
+          font-size: 1.2rem;
+        }
+
+        .preview-status-badge {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1.5rem;
+          border-radius: 30px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          letter-spacing: 1px;
+        }
+
+        .preview-status-badge.published {
+          background: rgba(72,187,120,0.2);
+          border: 1px solid rgba(72,187,120,0.3);
+          color: #a7f3d0;
+        }
+
+        .preview-status-badge.draft {
+          background: rgba(237,137,54,0.2);
+          border: 1px solid rgba(237,137,54,0.3);
+          color: #fde68a;
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: currentColor;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
         .preview-container {
-          background: white;
-          border-radius: 20px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid var(--glass-border);
+          border-radius: 40px;
           padding: 3rem;
-          box-shadow: 0 15px 40px rgba(13, 71, 161, 0.2);
+          backdrop-filter: blur(20px);
         }
 
         .preview-cover {
+          position: relative;
           width: 100%;
           margin-bottom: 2rem;
-          border-radius: 16px;
+          border-radius: 30px;
           overflow: hidden;
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
 
         .preview-cover img {
@@ -1494,13 +2108,18 @@ export default function AdminDashboard() {
           display: block;
         }
 
+        .preview-cover-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(135deg, rgba(41,121,255,0.1), transparent);
+          pointer-events: none;
+        }
+
         .preview-title {
+          font-family: var(--font-display);
           font-size: 3rem;
-          font-weight: 900;
-          background: linear-gradient(135deg, #0d47a1, #1976d2, #42a5f5);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          font-weight: 700;
+          font-style: italic;
+          color: var(--white);
           margin-bottom: 1.5rem;
           line-height: 1.2;
         }
@@ -1508,186 +2127,141 @@ export default function AdminDashboard() {
         .preview-meta {
           display: flex;
           gap: 2rem;
-          margin-bottom: 3rem;
-          padding-bottom: 2rem;
-          border-bottom: 2px solid rgba(66, 165, 245, 0.2);
-          flex-wrap: wrap;
+          margin-bottom: 2rem;
+          color: var(--text-muted-dark);
+          font-size: 0.95rem;
         }
 
         .preview-meta-item {
-          color: #718096;
-          font-size: 1.05rem;
-          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
 
-        .preview-status {
-          padding: 0.5rem 1.2rem;
-          border-radius: 20px;
-          font-weight: 700;
-          font-size: 0.9rem;
+        .meta-icon {
+          font-size: 1rem;
+          color: var(--blue-light);
         }
 
-        .preview-status.published {
-          background: linear-gradient(135deg, #48bb78, #38a169);
-          color: white;
+        .preview-divider {
+          display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;
         }
-
-        .preview-status.draft {
-          background: linear-gradient(135deg, #ed8936, #dd6b20);
-          color: white;
-        }
+        .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+        .divider-line { flex: 1; max-width: 80px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); }
+        .divider-diamond { color: rgba(144,201,255,0.6); font-size: 0.8rem; }
 
         .preview-content {
           font-size: 1.1rem;
           line-height: 1.9;
-          color: #2d3748;
+          color: var(--text-on-dark);
         }
 
-        .preview-content h1 { font-size: 2.5rem; font-weight: 700; margin: 2rem 0 1rem; color: #2d3748; }
-        .preview-content h2 { font-size: 2rem; font-weight: 600; margin: 1.75rem 0 0.75rem; color: #2d3748; }
-        .preview-content h3 { font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #2d3748; }
-        .preview-content p { margin-bottom: 1.5rem; line-height: 1.9; }
-        .preview-content img { border-radius: 12px; max-width: 100%; margin: 2rem 0; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); }
-        .preview-content blockquote { border-left: 4px solid #42a5f5; padding-left: 1.5rem; margin: 2rem 0; color: #718096; font-style: italic; font-size: 1.2rem; }
-        .preview-content code { background: #edf2f7; padding: 0.3rem 0.6rem; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.95rem; }
+        .preview-content h1 { font-size: 2.2rem; font-weight: 700; margin: 2rem 0 1rem; color: var(--white); }
+        .preview-content h2 { font-size: 1.8rem; font-weight: 600; margin: 1.75rem 0 0.75rem; color: var(--white); }
+        .preview-content h3 { font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--white); }
+        .preview-content p { margin-bottom: 1.5rem; }
+        .preview-content img { border-radius: 20px; max-width: 100%; margin: 2rem 0; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .preview-content blockquote { border-left: 4px solid var(--blue-vivid); padding-left: 1.5rem; margin: 2rem 0; color: var(--blue-pale); font-style: italic; }
+        .preview-content code { background: rgba(0,0,0,0.3); padding: 0.3rem 0.6rem; border-radius: 8px; font-family: 'Courier New', monospace; }
 
-        /* Responsive */
+        /* Footer Strip */
+        .footer-strip {
+          text-align: center;
+          padding: 2rem;
+          border-top: 1px solid rgba(255,255,255,0.07);
+          margin-top: 2rem;
+        }
+
+        .footer-text {
+          font-size: 0.65rem; font-weight: 700; letter-spacing: 4px;
+          text-transform: uppercase; color: rgba(255,255,255,0.25);
+        }
+
+        /* Responsive Design */
         @media (max-width: 1024px) {
-          .posts-grid {
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          }
+          .hero-title-top { font-size: 3.5rem; }
+          .hero-title-bottom { font-size: 1rem; letter-spacing: 6px; }
+          .tab-content-wrapper { padding: 2rem; }
+          .form-row { gap: 1.5rem; }
+          .posts-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
         }
 
         @media (max-width: 768px) {
-          .container {
-            padding: 0 1rem;
-          }
-
-          .dashboard-header {
-            padding: 2rem 1.5rem;
-          }
-
-          .dashboard-title {
-            font-size: 2rem;
-          }
-
-          .stats-bar {
-            gap: 1.5rem;
-          }
-
-          .stat-value {
-            font-size: 2rem;
-          }
-
-          .tab-content {
-            padding: 2rem 1.5rem;
-          }
-
-          .form-row {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-          }
-
-          .toolbar {
-            padding: 0.75rem;
-          }
-
-          .toolbar-group {
-            flex-wrap: wrap;
-          }
-
-          .posts-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .preview-container {
-            padding: 2rem 1.5rem;
-          }
-
-          .preview-title {
-            font-size: 2rem;
-          }
+          .admin-container { padding: 1rem 1rem 0; }
+          
+          .hero-glass { padding: 2rem; }
+          .hero-title-top { font-size: 2.8rem; }
+          .hero-title-bottom { font-size: 0.9rem; letter-spacing: 4px; }
+          .hero-subtitle { font-size: 1rem; }
+          
+          .stats-row { gap: 1rem; }
+          .stat-card { min-width: 120px; padding: 1.2rem; }
+          .stat-number { font-size: 2rem; }
+          
+          .tab-navigation { flex-direction: column; padding: 1rem 1rem 0; }
+          .tab-button { border-radius: 30px; }
+          
+          .tab-content-wrapper { padding: 1.5rem; }
+          
+          .section-title { font-size: 1.8rem; }
+          
+          .form-row { grid-template-columns: 1fr; }
+          
+          .toolbar { flex-direction: column; align-items: stretch; }
+          .toolbar-group { justify-content: center; }
+          .toolbar-divider { display: none; }
+          
+          .posts-grid { grid-template-columns: 1fr; }
+          
+          .preview-container { padding: 2rem; }
+          .preview-title { font-size: 2.2rem; }
+          .preview-meta { flex-direction: column; gap: 0.75rem; }
         }
 
         @media (max-width: 480px) {
-          .dashboard-header {
-            padding: 1.5rem 1rem;
-          }
+          .hero-glass { padding: 1.5rem; }
+          .hero-title-top { font-size: 2.2rem; }
+          .hero-title-bottom { font-size: 0.8rem; letter-spacing: 3px; }
+          
+          .stats-row { flex-direction: column; }
+          .stat-card { width: 100%; max-width: none; }
+          
+          .tab-content-wrapper { padding: 1rem; }
+          
+          .section-title { font-size: 1.5rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+          
+          .editor-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+          
+          .toolbar-group { flex-wrap: wrap; }
+          .toolbar-btn { flex: 1; }
+          
+          .content-editor, .content-preview { min-height: 300px; padding: 1rem; }
+          
+          .card-actions { flex-direction: column; }
+          .action-btn { width: 100%; }
+          
+          .preview-container { padding: 1.5rem; }
+          .preview-title { font-size: 1.8rem; }
+          .preview-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+          
+          .footer-text { letter-spacing: 2px; }
+        }
 
-          .dashboard-title {
-            font-size: 1.5rem;
-            flex-direction: column;
-            gap: 0.5rem;
-          }
+        /* Editor Content Styles */
+        .content-editor h1, .content-preview h1 { font-size: 2.2rem; font-weight: 700; margin: 1.5rem 0 1rem; color: var(--white); }
+        .content-editor h2, .content-preview h2 { font-size: 1.8rem; font-weight: 600; margin: 1.25rem 0 0.75rem; color: var(--white); }
+        .content-editor h3, .content-preview h3 { font-size: 1.4rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--white); }
+        .content-editor p, .content-preview p { line-height: 1.8; margin-bottom: 1rem; color: var(--text-on-dark); }
+        .content-editor ul, .content-editor ol, .content-preview ul, .content-preview ol { margin: 1rem 0; padding-left: 2rem; color: var(--text-on-dark); }
+        .content-editor li, .content-preview li { margin-bottom: 0.5rem; }
+        .content-editor blockquote, .content-preview blockquote { border-left: 4px solid var(--blue-vivid); padding-left: 1rem; margin: 1rem 0; color: var(--blue-pale); font-style: italic; }
+        .content-editor code, .content-preview code { background: rgba(0,0,0,0.3); padding: 0.2rem 0.4rem; border-radius: 6px; font-family: 'Courier New', monospace; color: #fbbf24; }
+        .content-editor a, .content-preview a { color: var(--blue-light); text-decoration: underline; }
+        .content-editor img, .content-preview img { border-radius: 12px; max-width: 100%; margin: 1rem 0; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
 
-          .title-icon {
-            font-size: 2rem;
-          }
-
-          .dashboard-subtitle {
-            font-size: 1rem;
-          }
-
-          .stats-bar {
-            flex-direction: column;
-            gap: 1rem;
-          }
-
-          .tab-navigation {
-            flex-direction: column;
-          }
-
-          .tab-button {
-            padding: 1rem 1.5rem;
-          }
-
-          .tab-content {
-            padding: 1.5rem 1rem;
-          }
-
-          .section-title {
-            font-size: 1.5rem;
-          }
-
-          .toolbar {
-            gap: 0.25rem;
-          }
-
-          .toolbar-btn, .toolbar-select {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.85rem;
-          }
-
-          .content-editor, .content-preview {
-            min-height: 300px;
-            padding: 1.5rem;
-          }
-
-          .submit-button {
-            padding: 1rem 2rem;
-            font-size: 1rem;
-          }
-
-          .preview-container {
-            padding: 1.5rem 1rem;
-          }
-
-          .preview-title {
-            font-size: 1.75rem;
-          }
-
-          .post-actions {
-            flex-direction: column;
-          }
-
-          .action-btn {
-            width: 100%;
-          }
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
     </div>
