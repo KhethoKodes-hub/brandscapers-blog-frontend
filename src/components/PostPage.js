@@ -927,252 +927,427 @@ const ppStyles = `
   }
   .pp-like-btn:hover .pp-like-glow { transform: translateX(100%); }
 
-  /* SHARE SECTION */
-  .pp-share-section {
-    padding: 0 clamp(1.5rem, 5vw, 3.5rem) clamp(2rem, 5vw, 3rem);
-  }
+ /* SHARE SECTION - Mobile Optimized */
+.pp-share-section {
+  padding: 0 clamp(1.5rem, 5vw, 3.5rem) clamp(2rem, 5vw, 3rem);
+}
 
-  .pp-share-heading {
-    display: flex; align-items: center; gap: 1.25rem;
-    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
-  }
-  .pp-share-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
-  .pp-share-title {
-    font-family: var(--pp-font-display);
-    font-size: clamp(1rem, 2.5vw, 1.3rem);
-    font-weight: 600; font-style: italic;
-    color: var(--pp-text-muted);
-    white-space: nowrap;
-  }
+.pp-share-heading {
+  display: flex; align-items: center; gap: 1.25rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+.pp-share-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
+.pp-share-title {
+  font-family: var(--pp-font-display);
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 600; font-style: italic;
+  color: var(--pp-text-muted);
+  white-space: nowrap;
+}
 
-  /* Mobile share grid */
+/* Mobile share grid - Improved */
+.pp-share-mobile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.pp-share-mobile-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--platform-color) 40%, transparent);
+  background: color-mix(in srgb, var(--platform-color) 15%, rgba(255,255,255,0.05));
+  color: var(--pp-white);
+  cursor: pointer;
+  transition: all 0.25s var(--pp-ease);
+  font-family: var(--pp-font-body);
+  min-width: 65px;
+  flex: 0 1 auto;
+}
+
+.pp-share-mobile-icon { 
+  font-size: 1.2rem; 
+}
+
+.pp-share-mobile-label { 
+  font-size: 0.55rem; 
+  font-weight: 700; 
+  letter-spacing: 0.3px; 
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* Galaxy share (desktop) - Hide on mobile */
+.pp-share-galaxy {
+  position: relative;
+  height: 320px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 768px) {
+  .pp-outer { 
+    padding: 1rem 1rem 0; 
+    gap: 1.25rem; 
+  }
+  
+  .pp-article-header { 
+    padding: 1.75rem 1.25rem 1.25rem; 
+  }
+  
+  .pp-title {
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+  }
+  
+  .pp-content { 
+    padding: 0 1.25rem 1.5rem; 
+    font-size: 0.95rem;
+  }
+  
+  .pp-content h1 { font-size: 1.8rem; }
+  .pp-content h2 { font-size: 1.5rem; }
+  .pp-content h3 { font-size: 1.2rem; }
+  
+  .pp-tags-row, 
+  .pp-section-divider, 
+  .pp-like-wrap, 
+  .pp-share-section { 
+    padding-left: 1.25rem; 
+    padding-right: 1.25rem; 
+  }
+  
+  .pp-cover-wrap { 
+    margin: 0 1.25rem; 
+    margin-bottom: 1.5rem; 
+  }
+  
+  .pp-comments-header { 
+    padding: 1.5rem 1.25rem 0.75rem; 
+  }
+  
+  .pp-comments-list { 
+    padding: 0 1.25rem; 
+  }
+  
+  .pp-comment-form-wrap { 
+    padding: 1.25rem; 
+  }
+  
+  .pp-share-galaxy { 
+    display: none; 
+  }
+  
   .pp-share-mobile-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+    gap: 0.4rem;
   }
-
+  
   .pp-share-mobile-btn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 0.35rem;
-    padding: 0.9rem 0.5rem;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--platform-color) 40%, transparent);
-    background: color-mix(in srgb, var(--platform-color) 15%, rgba(255,255,255,0.05));
-    color: var(--pp-white);
-    cursor: pointer;
-    transition: all 0.25s var(--pp-ease);
-    font-family: var(--pp-font-body);
+    min-width: 55px;
+    padding: 0.5rem 0.3rem;
   }
-
-  .pp-share-mobile-btn:hover {
-    transform: translateY(-3px);
-    background: color-mix(in srgb, var(--platform-color) 30%, rgba(255,255,255,0.1));
-    box-shadow: 0 8px 20px color-mix(in srgb, var(--platform-color) 40%, transparent);
+  
+  .pp-share-mobile-icon {
+    font-size: 1rem;
   }
-
-  .pp-share-mobile-icon { font-size: 1.4rem; }
-  .pp-share-mobile-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.85; }
-
-  /* Galaxy share (desktop) */
-  .pp-share-galaxy {
-    position: relative;
-    height: 320px;
-    display: flex; align-items: center; justify-content: center;
+  
+  .pp-share-mobile-label {
+    font-size: 0.5rem;
   }
-
-  .pp-galaxy-core {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  
+  /* Comment reactions mobile */
+  .pp-reactions-row {
+    gap: 0.4rem;
   }
-  .pp-galaxy-icon {
-    font-size: 2rem; color: var(--pp-blue-pale);
-    animation: pp-core-pulse 3s ease-in-out infinite;
+  
+  .pp-reaction-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
   }
-  @keyframes pp-core-pulse {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.15); }
-  }
-  .pp-galaxy-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
-
-  .pp-galaxy-ring {
-    position: absolute; top: 50%; left: 50%;
-    border-radius: 50%;
-    border: 1px solid rgba(41,121,255,0.15);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  .pp-ring-1 { width: 220px; height: 220px; animation: pp-ring-spin-slow 20s linear infinite; }
-  .pp-ring-2 { width: 300px; height: 300px; border-style: dashed; animation: pp-ring-spin-slow 30s linear infinite reverse; }
-
-  @keyframes pp-ring-spin-slow { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
-
-  .pp-galaxy-btn {
-    position: absolute;
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    border: 1.5px solid color-mix(in srgb, var(--platform-color) 60%, transparent);
-    background: color-mix(in srgb, var(--platform-color) 20%, rgba(255,255,255,0.05));
-    color: var(--pp-white);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; font-weight: 700;
-    font-family: var(--pp-font-body);
-    transition: all 0.3s var(--pp-ease);
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
-  }
-
-  .pp-galaxy-btn-hov {
-    width: 60px; height: 60px;
-    background: color-mix(in srgb, var(--platform-color) 50%, rgba(20,30,60,0.5));
-    border-color: var(--platform-color);
-    box-shadow: 0 0 25px color-mix(in srgb, var(--platform-color) 60%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);
-    z-index: 20;
-  }
-
-  .pp-galaxy-btn-icon { position: relative; z-index: 1; }
-
-  .pp-galaxy-btn-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px); left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10,25,41,0.9);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: var(--pp-white);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    pointer-events: none;
-    animation: pp-tooltip-in 0.2s ease;
-  }
-
-  @keyframes pp-tooltip-in {
-    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
-  }
-
-  /* COMMENTS CARD */
-  .pp-comments-card {
-    position: relative;
-    background: linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.05) 100%);
-    backdrop-filter: blur(50px) saturate(180%);
-    -webkit-backdrop-filter: blur(50px) saturate(180%);
-    border-radius: clamp(20px, 4vw, 32px);
-    border: 1px solid rgba(255,255,255,0.15);
-    overflow: hidden;
-    box-shadow: 0 25px 70px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
-  }
-
-  .pp-comments-top-line {
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(41,121,255,0.6), rgba(92,159,255,0.8), rgba(41,121,255,0.6), transparent);
-  }
-
-  .pp-comments-header {
-    padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem) 1rem;
-  }
-
-  .pp-comments-eyebrow {
-    font-size: 0.6rem; font-weight: 800; letter-spacing: 4px; text-transform: uppercase;
-    color: var(--pp-blue-pale); opacity: 0.7;
-    margin-bottom: 0.5rem;
-  }
-
-  .pp-comments-title {
-    font-family: var(--pp-font-display);
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 700; font-style: italic;
-    color: var(--pp-white);
-    display: flex; align-items: center; gap: 1rem;
-  }
-
-  .pp-comments-count {
-    font-family: var(--pp-font-body);
-    font-style: normal;
-    font-size: 0.85rem; font-weight: 800;
-    background: linear-gradient(135deg, var(--pp-blue-deep), var(--pp-blue-vivid));
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    letter-spacing: 0;
-  }
-
-  /* No comments */
-  .pp-no-comments {
-    text-align: center;
-    padding: clamp(2rem, 5vw, 3.5rem);
-  }
-  .pp-no-comments-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
-  .pp-no-comments-text { color: var(--pp-text-muted); font-size: 0.95rem; font-style: italic; }
-
-  /* Comments list */
-  .pp-comments-list {
-    padding: 0 clamp(1.5rem, 4vw, 2.5rem);
-    display: flex; flex-direction: column; gap: 1rem;
-  }
-
-  /* Comment card */
+  
   .pp-comment-card {
-    position: relative;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: clamp(14px, 2vw, 20px);
-    padding: clamp(1.1rem, 3vw, 1.75rem);
-    transition: all 0.3s var(--pp-ease);
-    overflow: hidden;
+    padding: 1rem;
   }
-
-  .pp-comment-hov {
-    background: rgba(255,255,255,0.10);
-    border-color: rgba(41,121,255,0.3);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2), 0 0 0 1px rgba(41,121,255,0.15);
-  }
-
-  .pp-comment-top-accent {
-    position: absolute; top: 0; left: 0; right: 0; height: 0;
-    background: linear-gradient(90deg, var(--pp-blue-deep), var(--pp-blue-vivid));
-    transition: height 0.3s ease;
-  }
-  .pp-comment-hov .pp-comment-top-accent { height: 2px; }
-
-  .pp-comment-head {
-    display: flex; align-items: center; gap: 0.9rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .pp-comment-avatar {
-    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--pp-blue-deep), var(--pp-blue-vivid));
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.9rem; color: var(--pp-white);
-    border: 1.5px solid rgba(41,121,255,0.3);
-    box-shadow: 0 4px 12px rgba(41,121,255,0.25);
-  }
-
-  .pp-comment-meta { display: flex; flex-direction: column; gap: 0.15rem; }
-  .pp-comment-author { font-size: 0.9rem; font-weight: 700; color: var(--pp-white); }
-  .pp-comment-date { font-size: 0.72rem; color: var(--pp-text-muted); }
-
+  
   .pp-comment-text {
-    color: rgba(220,238,255,0.85);
-    font-size: clamp(0.88rem, 1.8vw, 0.97rem);
-    line-height: 1.7;
-    word-break: break-word;
+    font-size: 0.85rem;
+  }
+  
+  .pp-comment-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+  
+  .pp-comment-author {
+    font-size: 0.8rem;
+  }
+  
+  .pp-comment-date {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pp-outer {
+    padding: 0.75rem 0.75rem 0;
+  }
+  
+  .pp-article-header {
+    padding: 1.25rem 1rem 1rem;
+  }
+  
+  .pp-title {
+    font-size: 1.4rem;
     margin-bottom: 1rem;
   }
-
-  /* Reactions */
-  .pp-reactions-row {
-    display: flex; flex-wrap: wrap; gap: 0.5rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid rgba(255,255,255,0.08);
+  
+  .pp-meta-row {
+    gap: 0.5rem;
+    font-size: 0.7rem;
   }
+  
+  .pp-meta-item {
+    font-size: 0.7rem;
+  }
+  
+  .pp-content {
+    padding: 0 1rem 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  
+  .pp-content h1 { font-size: 1.5rem; }
+  .pp-content h2 { font-size: 1.3rem; }
+  .pp-content h3 { font-size: 1.1rem; }
+  
+  .pp-content p {
+    margin-bottom: 1rem;
+  }
+  
+  .pp-content blockquote {
+    padding: 0.75rem 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+  
+  .pp-tags-row {
+    gap: 0.3rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .pp-tag {
+    font-size: 0.55rem;
+    padding: 0.2rem 0.6rem;
+  }
+  
+  .pp-section-divider {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Like button mobile */
+  .pp-like-btn {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+  
+  .pp-like-icon {
+    font-size: 1rem;
+  }
+  
+  .pp-like-count {
+    font-size: 0.7rem;
+  }
+  
+  /* Share buttons mobile - even smaller */
+  .pp-share-mobile-grid {
+    gap: 0.3rem;
+  }
+  
+  .pp-share-mobile-btn {
+    min-width: 48px;
+    padding: 0.4rem 0.2rem;
+  }
+  
+  .pp-share-mobile-icon {
+    font-size: 0.9rem;
+  }
+  
+  .pp-share-mobile-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.2px;
+  }
+  
+  /* Comments section mobile */
+  .pp-comments-header {
+    padding: 1.25rem 1rem 0.5rem;
+  }
+  
+  .pp-comments-title {
+    font-size: 1.2rem;
+    gap: 0.5rem;
+  }
+  
+  .pp-comments-count {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+  }
+  
+  .pp-comments-list {
+    padding: 0 1rem;
+  }
+  
+  .pp-comment-card {
+    padding: 0.9rem;
+  }
+  
+  .pp-comment-head {
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .pp-comment-avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 0.7rem;
+  }
+  
+  .pp-comment-author {
+    font-size: 0.75rem;
+  }
+  
+  .pp-comment-date {
+    font-size: 0.6rem;
+  }
+  
+  .pp-comment-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+  
+  .pp-reactions-row {
+    gap: 0.3rem;
+    padding-top: 0.6rem;
+  }
+  
+  .pp-reaction-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    gap: 0.2rem;
+  }
+  
+  .pp-reaction-count {
+    padding: 0.05rem 0.3rem;
+    font-size: 0.6rem;
+  }
+  
+  /* Comment form mobile */
+  .pp-comment-form-wrap {
+    padding: 1rem;
+  }
+  
+  .pp-form-heading {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+  
+  .pp-textarea {
+    padding: 0.8rem;
+    font-size: 0.8rem;
+    min-height: 80px;
+  }
+  
+  .pp-submit-btn {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.8rem;
+  }
+  
+  /* Footer mobile */
+  .pp-footer {
+    padding: 1rem;
+  }
+  
+  .pp-footer-text {
+    font-size: 0.55rem;
+    letter-spacing: 3px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pp-title {
+    font-size: 1.2rem;
+  }
+  
+  .pp-meta-row {
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-start;
+  }
+  
+  .pp-meta-item {
+    font-size: 0.65rem;
+  }
+  
+  .pp-content {
+    font-size: 0.85rem;
+  }
+  
+  .pp-content h1 { font-size: 1.3rem; }
+  .pp-content h2 { font-size: 1.1rem; }
+  .pp-content h3 { font-size: 1rem; }
+  
+  /* Share buttons - scrollable row on very small screens */
+  .pp-share-mobile-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pp-blue-pale) transparent;
+    justify-content: flex-start;
+  }
+  
+  .pp-share-mobile-grid::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .pp-share-mobile-grid::-webkit-scrollbar-thumb {
+    background-color: var(--pp-blue-pale);
+    border-radius: 10px;
+  }
+  
+  .pp-share-mobile-btn {
+    min-width: 45px;
+    padding: 0.35rem 0.15rem;
+  }
+  
+  .pp-share-mobile-icon {
+    font-size: 0.85rem;
+  }
+  
+  .pp-share-mobile-label {
+    font-size: 0.4rem;
+  }
+  
+  /* Comment reactions - stack on very small */
+  .pp-reactions-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  
+  .pp-reaction-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 
   .pp-reaction-btn {
     display: inline-flex; align-items: center; gap: 0.35rem;
