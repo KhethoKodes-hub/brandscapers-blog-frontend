@@ -157,7 +157,7 @@ export default function NavBar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span className="nb-link-gem">◈</span>
-                <span>Home</span>
+                <span>Blog Home</span>
                 <span className="nb-link-rail" />
               </Link>
 
