@@ -690,181 +690,66 @@ export default function Home() {
           border-color: rgba(41,121,255,0.45);
         }
 
-       /* Updated Footer styles for better mobile responsiveness */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: auto;
-}
+        /* Footer */
+        .card-footer {
+          display: flex; justify-content: space-between; align-items: center;
+          padding-top: 1.25rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          margin-top: auto;
+        }
 
-.read-btn {
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 30px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-decoration: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
-  color: var(--white);
-  transition: all 0.4s var(--ease-out);
-  backdrop-filter: blur(20px);
-  white-space: nowrap; /* Prevents text wrapping */
-}
+        .read-btn {
+          position: relative; overflow: hidden;
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          border-radius: 30px;
+          font-size: 0.875rem; font-weight: 700; letter-spacing: 0.5px;
+          text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.08);
+          color: var(--white);
+          transition: all 0.4s var(--ease-out);
+          backdrop-filter: blur(20px);
+        }
+        .read-btn-hovered {
+          background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
+          border-color: rgba(41,121,255,0.6);
+          box-shadow: 0 8px 25px rgba(41,121,255,0.35);
+          transform: translateY(-2px);
+        }
 
-.like-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.65rem 1.1rem;
-  border-radius: 30px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
-  white-space: nowrap; /* Prevents text wrapping */
-}
+        .read-btn-arrow {
+          transition: transform 0.3s var(--ease-spring);
+        }
+        .read-btn-hovered .read-btn-arrow { transform: translateX(5px); }
 
-/* Mobile Responsive Fixes */
-@media (max-width: 768px) {
-  .card-footer {
-    flex-direction: row; /* Keep horizontal on tablets */
-    gap: 0.5rem;
-  }
-  
-  .read-btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.8rem;
-    flex: 1; /* Takes available space */
-  }
-  
-  .like-pill {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.8rem;
-    flex-shrink: 0; /* Prevents shrinking */
-  }
-}
+        .read-btn-glow {
+          position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.5s ease;
+        }
+        .read-btn-hovered .read-btn-glow { transform: translateX(100%); }
 
-@media (max-width: 480px) {
-  .card-footer {
-    flex-direction: row; /* Keep horizontal, don't stack */
-    gap: 0.4rem;
-  }
-  
-  .read-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.7rem;
-    gap: 0.3rem;
-    flex: 1;
-  }
-  
-  .read-btn-text {
-    font-size: 0.7rem;
-  }
-  
-  .read-btn-arrow {
-    font-size: 0.8rem;
-  }
-  
-  .like-pill {
-    padding: 0.4rem 0.8rem;
-    gap: 0.3rem;
-  }
-  
-  .like-heart {
-    font-size: 0.7rem;
-  }
-  
-  .like-count {
-    font-size: 0.7rem;
-  }
-}
+        .like-pill {
+          display: flex; align-items: center; gap: 0.45rem;
+          padding: 0.65rem 1.1rem;
+          border-radius: 30px;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.12);
+          backdrop-filter: blur(20px);
+          transition: all 0.3s ease;
+        }
+        .post-card-hovered .like-pill {
+          background: rgba(255,80,120,0.15);
+          border-color: rgba(255,80,120,0.3);
+        }
 
-@media (max-width: 360px) {
-  .card-footer {
-    gap: 0.3rem;
-  }
-  
-  .read-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.65rem;
-  }
-  
-  .read-btn-text {
-    font-size: 0.65rem;
-  }
-  
-  .read-btn-arrow {
-    font-size: 0.7rem;
-  }
-  
-  .like-pill {
-    padding: 0.35rem 0.7rem;
-  }
-  
-  .like-heart, .like-count {
-    font-size: 0.65rem;
-  }
-}
+        .like-heart { color: #ff6b9d; font-size: 0.85rem; }
+        .like-count { font-size: 0.875rem; font-weight: 700; color: rgba(255,255,255,0.8); }
 
-/* For very small devices where text might still overflow */
-@media (max-width: 320px) {
-  .read-btn-text {
-    display: none; /* Hide text on extremely small screens */
-  }
-  
-  .read-btn {
-    padding: 0.4rem 0.6rem;
-  }
-  
-  .read-btn-arrow {
-    font-size: 0.8rem;
-    margin: 0;
-  }
-}
-
-/* Hover states remain the same */
-.read-btn-hovered {
-  background: linear-gradient(135deg, var(--navy-bright), var(--blue-vivid));
-  border-color: rgba(41,121,255,0.6);
-  box-shadow: 0 8px 25px rgba(41,121,255,0.35);
-  transform: translateY(-2px);
-}
-
-.read-btn-arrow {
-  transition: transform 0.3s var(--ease-spring);
-}
-
-.read-btn-hovered .read-btn-arrow {
-  transform: translateX(5px);
-}
-
-.read-btn-glow {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.5s ease;
-}
-
-.read-btn-hovered .read-btn-glow {
-  transform: translateX(100%);
-}
-
-.post-card-hovered .like-pill {
-  background: rgba(255,80,120,0.15);
-  border-color: rgba(255,80,120,0.3);
-}
         /* Corner decorations */
         .card-corner-tl, .card-corner-br {
           position: absolute; width: 24px; height: 24px;
