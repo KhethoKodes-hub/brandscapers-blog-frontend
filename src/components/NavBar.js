@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+
 // ── Inline SVG Logo ────────────────────────────────────────────────────────────
 function BrandscapersLogo() {
   return (
@@ -123,19 +124,31 @@ export default function NavBar() {
 
         <div className="nb-container">
 
-          {/* ── LOGO → brandscapersafrica.com ── */}
-          <a
-            href="https://www.brandscapersafrica.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nb-brand"
-            title="Visit Brandscapers Africa"
-          >
-            <div className="nb-svg-wrap">
-              <BrandscapersLogo />
-            </div>
-            <div className="nb-brand-halo" />
-          </a>
+        {/* ── LOGO → brandscapersafrica.com ── */}
+<a
+  href="https://www.brandscapersafrica.com"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="nb-brand"
+  title="Visit Brandscapers Africa"
+  
+>
+  <div className="nb-svg-wrap">
+    <img src="/brandscapersafricalogo.jpeg" alt="Brandscapers Africa Logo"   style={{ height: "60px", width: "auto" }}
+/>
+    
+  </div>
+  <div className="nb-brand-halo" />
+  <div className="nb-brand-scanline" />
+  <div className="nb-brand-particles">
+    <span className="nb-particle nb-p1" />
+    <span className="nb-particle nb-p2" />
+    <span className="nb-particle nb-p3" />
+    <span className="nb-particle nb-p4" />
+    <span className="nb-particle nb-p5" />
+    <span className="nb-particle nb-p6" />
+  </div>
+</a>
 
           {/* ── NAV LINKS ── */}
           <div className={`nb-drawer${mobileMenuOpen ? ' nb-drawer-open' : ''}`}>
@@ -334,17 +347,121 @@ const CSS = `
     align-items: center;
     text-decoration: none;
     flex-shrink: 0;
-    transition: transform 0.35s var(--spring), filter 0.35s ease;
-  }
-  .nb-brand:hover {
-    transform: translateY(-2px);
-    filter: drop-shadow(0 6px 18px rgba(41,121,255,0.45));
+    transition: transform 0.4s var(--spring), filter 0.4s ease;
+    border-radius: 10px;
+    padding: 2px 4px;
   }
 
-  .nb-svg-wrap {
-    width: clamp(145px, 21vw, 210px);
-    height: clamp(34px, 5.2vw, 50px);
-    transition: opacity 0.3s ease;
+  /* ── LOGO IMAGE ── */
+  .nb-svg-wrap img {
+    display: block;
+    height: 46px !important;
+    width: auto !important;
+    border-radius: 6px;
+    transition:
+      filter 0.45s ease,
+      transform 0.45s var(--spring),
+      opacity 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Lift + sharpen + blue-tinted glow on hover */
+  .nb-brand:hover .nb-svg-wrap img {
+    transform: scale(1.06) translateY(-2px);
+    filter:
+      drop-shadow(0 0 8px rgba(41,121,255,0.70))
+      drop-shadow(0 0 22px rgba(144,201,255,0.40))
+      brightness(1.08)
+      saturate(1.15);
+  }
+
+  /* Scanline sweep — thin bright line that crosses logo on hover */
+  .nb-brand-scanline {
+    position: absolute;
+    top: 0; left: -100%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(144,201,255,0.28) 50%,
+      transparent 70%
+    );
+    border-radius: 10px;
+    pointer-events: none;
+    transition: none;
+    z-index: 2;
+    opacity: 0;
+  }
+  .nb-brand:hover .nb-brand-scanline {
+    animation: nbScanSweep 0.55s ease forwards;
+    opacity: 1;
+  }
+  @keyframes nbScanSweep {
+    from { left: -60%; opacity: 1; }
+    to   { left: 140%; opacity: 0.4; }
+  }
+
+  /* Particles — burst on hover */
+  .nb-brand-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    overflow: visible;
+  }
+  .nb-particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .nb-p1 { width: 4px;  height: 4px;  background: #90c9ff; top: 20%; left: 15%; }
+  .nb-p2 { width: 3px;  height: 3px;  background: #2979ff; top: 70%; left: 25%; }
+  .nb-p3 { width: 5px;  height: 5px;  background: #ffffff; top: 10%; left: 60%; }
+  .nb-p4 { width: 3px;  height: 3px;  background: #5c9fff; top: 80%; left: 75%; }
+  .nb-p5 { width: 4px;  height: 4px;  background: #90c9ff; top: 40%; left: 88%; }
+  .nb-p6 { width: 2px;  height: 2px;  background: #2979ff; top: 55%; left: 5%;  }
+
+  .nb-brand:hover .nb-p1 { animation: nbPop1 0.6s 0.05s ease-out forwards; }
+  .nb-brand:hover .nb-p2 { animation: nbPop2 0.5s 0.10s ease-out forwards; }
+  .nb-brand:hover .nb-p3 { animation: nbPop3 0.7s 0.00s ease-out forwards; }
+  .nb-brand:hover .nb-p4 { animation: nbPop4 0.55s 0.08s ease-out forwards; }
+  .nb-brand:hover .nb-p5 { animation: nbPop5 0.65s 0.03s ease-out forwards; }
+  .nb-brand:hover .nb-p6 { animation: nbPop6 0.5s 0.12s ease-out forwards; }
+
+  @keyframes nbPop1 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(-8px,-12px) scale(1.2)} 100%{opacity:0;transform:translate(-14px,-22px) scale(0.4)} }
+  @keyframes nbPop2 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(-6px,10px) scale(1.1)} 100%{opacity:0;transform:translate(-12px,18px) scale(0.4)} }
+  @keyframes nbPop3 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(10px,-14px) scale(1.3)} 100%{opacity:0;transform:translate(18px,-24px) scale(0.4)} }
+  @keyframes nbPop4 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(8px,12px) scale(1.1)} 100%{opacity:0;transform:translate(16px,20px) scale(0.4)} }
+  @keyframes nbPop5 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(12px,-8px) scale(1.2)} 100%{opacity:0;transform:translate(22px,-16px) scale(0.4)} }
+  @keyframes nbPop6 { 0%{opacity:0;transform:translate(0,0) scale(0)} 40%{opacity:1;transform:translate(-10px,8px) scale(1)} 100%{opacity:0;transform:translate(-18px,14px) scale(0.4)} }
+
+  /* Outer border glow ring on hover */
+  .nb-brand::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, rgba(41,121,255,0), rgba(144,201,255,0)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+  .nb-brand:hover::after {
+    opacity: 1;
+    border-color: rgba(41,121,255,0.45);
+    box-shadow: 0 0 0 3px rgba(41,121,255,0.10), 0 8px 32px rgba(41,121,255,0.30);
+    animation: nbRingPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes nbRingPulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(41,121,255,0.10), 0 8px 32px rgba(41,121,255,0.30); }
+    50%      { box-shadow: 0 0 0 6px rgba(41,121,255,0.06), 0 10px 42px rgba(144,201,255,0.42); }
   }
 
   /* radial halo on hover */
